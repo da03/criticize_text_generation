@@ -100,3 +100,29 @@ python run_language_modeling.py \
 Training takes a few hours to a day on a single Nvidia A100 GPU, depending on the dataset.
 
 ### Generate from LMs
+
+To generate from a trained language model, for the W/ Title setting:
+
+```
+ python scripts/generate/sample_LM.py \
+        --language_model_checkpoint language_model_checkpoints/PubMed/GPT-2/With_Title \
+        --output_file generation.pubmed.w_title.gpt2.json \
+        --with_title \
+        --num_samples 100
+```
+
+For the W/O Title setting:
+
+```
+ python scripts/generate/sample_LM.py \
+        --language_model_checkpoint language_model_checkpoints/PubMed/GPT-2/Without_Title \
+        --output_file generation.pubmed.wo_title.gpt2.json \
+        --num_samples 100
+```
+
+Note that in the paper we used 10k samples, which requires setting `--num_samples` to 10000 (it takes much longer to generate 10k samples so we used 100 in the above example commands).
+
+
+### Posterior Inference
+
+The goal of posterior inference is to infer the section titles z conditioned on section text x. We use a BERT-based classifier and use the MAP value of z instead of maintaining a full distribution over z.
