@@ -34,7 +34,9 @@ def main(args):
     assert eos_id == tokenizer.eos_token_id
 
     # Load LM
-    model = AutoModelForCausalLM.from_pretrained(args.language_model_checkpoint, pad_token_id=tokenizer.eos_token_id).cuda()
+    model = AutoModelForCausalLM.from_pretrained(args.language_model_checkpoint, pad_token_id=tokenizer.eos_token_id)
+    model.cuda()
+    model.eval()
     
     torch.manual_seed(args.seed)
     
@@ -72,6 +74,8 @@ def main(args):
                 try:
                     section_name, section_text = section.strip().split(':', 1)
                     section_text = section_text.strip()
+                    if len(section_text) == 0:
+                        invalid = True
                 except Exception as e:
                     invalid = True
                 section_names.append(section_name)
@@ -87,7 +91,7 @@ def main(args):
         sys.stdout.flush()
         sample = {'section_names': section_names, 'sections': sections}
         samples.append(sample)
-    fout.write(json.dumps(samples))
+    json.dumps(samples, open(args.output_file, 'w'))
 
 if __name__ == '__main__':
     main(args)
