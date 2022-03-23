@@ -23,6 +23,12 @@ Each dataset split is a list of dictionaries, where each dictionary is an exampl
 
 ## Usage
 
+First, we setup an environment variable holding the absolute path of the current repo.
+
+```
+export WORKING_DIR=$(pwd)
+```
+
 ### Train LMs (Optional)
 
 In the paper we considered two different data settings: with section titles (W/ Title) and without section titles (W/O Title). We need to first process data according to these settings, using the script `scripts/data/process_data_for_LMs.py`. Note that this section can be skipped if you download the pretrained language models listed above.
@@ -49,8 +55,8 @@ cd examples/legacy
 We will use the dataset PubMed to illustrate training (the commands for other datasets are the same). To train a GPT-2-based language model, we use the below command:
 
 ```
-export TRAIN_FILE=data/PubMed/train.w_title.txt
-export TEST_FILE=data/PubMed/val.w_title.txt
+export TRAIN_FILE=${WORKING_DIR}/data/PubMed/train.w_title.txt
+export TEST_FILE=${WORKING_DIR}/data/PubMed/val.w_title.txt
 export B=8
 export A=1
 export epochs=30
@@ -58,7 +64,7 @@ export model=gpt2
 python run_language_modeling.py \
        --per_device_train_batch_size=${B} \
        --gradient_accumulation_steps=${A} \
-       --output_dir=language_model_checkpoints/PubMed/GPT-2 \
+       --output_dir=${WORKING_DIR}/language_model_checkpoints/PubMed/GPT-2 \
        --model_type=$model \
        --model_name_or_path=$model \
        --do_train \
@@ -66,7 +72,7 @@ python run_language_modeling.py \
        --train_data_file=$TRAIN_FILE \
        --eval_data_file=$TEST_FILE --overwrite_output_dir --save_total_limit=5 \
        --learning_rate=5e-5 --num_train_epochs=${epochs} --load_best_model_at_end=True \
-       --evaluation_strategy=epoch --save_strategy=epoch > log.pubmed.trainLM.w_title.gpt2 2>&1&
+       --evaluation_strategy=epoch --save_strategy=epoch > ${WORKING_DIR}/log.pubmed.trainLM.w_title.gpt2 2>&1&
 ```
 
 Note that above we only showed the training commands for the W/ Title setting. We use the same settings for the W/O Title setting except for the training and validation files.
@@ -74,8 +80,8 @@ Note that above we only showed the training commands for the W/ Title setting. W
 To train a GPT-Neo-based language model, we use the below command:
 
 ```
-export TRAIN_FILE=data/PubMed/train.w_title.txt
-export TEST_FILE=data/PubMed/val.w_title.txt
+export TRAIN_FILE=${WORKING_DIR}/data/PubMed/train.w_title.txt
+export TEST_FILE=${WORKING_DIR}/data/PubMed/val.w_title.txt
 export B=4
 export A=2
 export epochs=30
@@ -83,7 +89,7 @@ export model=EleutherAI/gpt-neo-125M
 python run_language_modeling.py \
        --per_device_train_batch_size=${B} \
        --gradient_accumulation_steps=${A} \
-       --output_dir=language_model_checkpoints/PubMed/GPT-Neo \
+       --output_dir=${WORKING_DIR}/language_model_checkpoints/PubMed/GPT-Neo \
        --model_type=$model \
        --model_name_or_path=$model \
        --do_train \
@@ -91,13 +97,17 @@ python run_language_modeling.py \
        --train_data_file=$TRAIN_FILE \
        --eval_data_file=$TEST_FILE --overwrite_output_dir --save_total_limit=5 \
        --learning_rate=5e-5 --num_train_epochs=${epochs} --load_best_model_at_end=True \
-       --evaluation_strategy=epoch --save_strategy=epoch > log.pubmed.trainLM.w_title.gptneo 2>&1&
+       --evaluation_strategy=epoch --save_strategy=epoch > ${WORKING_DIR}/log.pubmed.trainLM.w_title.gptneo 2>&1&
 
 ```
 
 Training takes a few hours to a day on a single Nvidia A100 GPU, depending on the dataset.
 
 ### Generate from LMs
+
+```
+cd $WORKING_DIR
+```
 
 To generate from a trained language model, for the W/ Title setting:
 
@@ -129,6 +139,28 @@ We use huggingface transformer's script `examples/pytorch/text-classification/ru
 python scripts/data/process_data_for_posterior_inferencers.py --dataset_folder data/PubMed/
 ```
 
+Next, we can train a posterior inferencer (starting from the root directory of huggingface's Transformer):
+
+```
+cd examples/pytorch/text-classification
+```
+
+```
+python run_glue.py \
+    --model_name_or_path=bert-base-cased \
+    --do_train \
+    --do_eval \
+    --train_file=${WORKING_DIR}/data/PubMed/train.posterior_inferencer.json \
+    --validation_file=${WORKING_DIR}/data/PubMed/val.posterior_inferencer.json \
+    --max_seq_length=512 \
+    --per_gpu_train_batch_size=32 \
+    --learning_rate=2e-5 \
+    --num_train_epochs=3.0 \
+    --output_dir=${WORKING_DIR}/posterior_inferencer_checkpoints/PubMed \
+    --save_total_limit=5 \
+    --overwrite_output_dir > ${WORKING_DIR}/log.pubmed.trainPosteriorInferencer 2>&1&
+```
+
 
 ### Posterior Inference
 
@@ -140,3 +172,7 @@ python scripts/posterior_inference/infer_section_titles.py \
        --input_file generation.pubmed.w_title.gpt2.json \
        --output_file predicted_z.generation.pubmed.w_title.gpt2.json
 ```
+
+### Model Criticism in Latent Space
+
+Now we are ready to criticise in the latent space.
