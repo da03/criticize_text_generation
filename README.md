@@ -175,4 +175,23 @@ python scripts/posterior_inference/infer_section_titles.py \
 
 ### Model Criticism in Latent Space
 
-Now we are ready to criticise in the latent space.
+Now we are ready to criticize in the latent space. First, we need to fit the criticizer distribution $P_c(z)$:
+
+```
+python scripts/criticize/fit_criticizer.py --dataset_folder data/PubMed/ --output_folder criticizer/PubMed/
+```
+
+Next, we evaluate LM generations:
+
+```
+python scripts/criticize/criticize.py \
+       --criticizer criticizer/PubMed/ \
+       --input_file predicted_z.generation.pubmed.w_title.gpt2.json
+```
+
+The output will contain the latent PPL for the LM generations.
+
+
+## Acknowledgements
+
+The datasets PubMed and ArXiv are adapted from [Cohan et. al. 2018](https://aclanthology.org/N18-2097/). Wiki is processed based on the English Wikipedia [dumped on Dec 1, 2021](https://dumps.wikimedia.org/enwiki/20211201/).

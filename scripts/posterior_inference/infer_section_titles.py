@@ -42,7 +42,7 @@ def main(args):
             logits = outputs['logits'][0]
             label = logits.argmax(0).item()
             predicted_section_name = id2label[label]
-            predicted_section_names.append(label)
+            predicted_section_names.append(predicted_section_name)
             if section_name is not None:
                 total += 1
                 if section_name == predicted_section_name:
