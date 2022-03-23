@@ -28,20 +28,29 @@ def main(args):
     id2label = model.config.id2label
    
     data = json.load(open(args.input_file))
+    total = 0
+    same = 0
     for sample in tqdm(data):
         sections = sample['sections']
-        predicted_section_titles = []
-        for section in sections:
+        section_names = sample['section_names']
+        predicted_section_names = []
+        for section, section_name in zip(sections, section_names):
             inputs = tokenizer(section, padding='max_length', max_length=512, truncation=True)
             for k in inputs:
                 inputs[k] = torch.LongTensor(inputs[k]).cuda().unsqueeze(0)
             outputs = model(**inputs)
             logits = outputs['logits'][0]
             label = logits.argmax(0).item()
-            label = id2label[label]
-            predicted_section_titles.append(label)
+            predicted_section_name = id2label[label]
+            predicted_section_names.append(label)
+            if section_name is not None:
+                total += 1
+                if section_name == predicted_section_name:
+                    same += 1
         sample['predicted_section_names'] = predicted_section_names
-    fout.write(json.dumps(data))
+    json.dump(data, open(args.output_file, 'w'))
+    if total > 0:
+        print (f'{same/total*100}% ({same} out of {total}) predicted labels same as original labels')
 
 if __name__ == '__main__':
     main(args)

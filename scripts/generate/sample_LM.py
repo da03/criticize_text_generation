@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 import argparse
 import tqdm
 
@@ -91,7 +92,7 @@ def main(args):
         sys.stdout.flush()
         sample = {'section_names': section_names, 'sections': sections}
         samples.append(sample)
-    json.dumps(samples, open(args.output_file, 'w'))
+    json.dump(samples, open(args.output_file, 'w'))
 
 if __name__ == '__main__':
     main(args)

@@ -25,12 +25,10 @@ Each dataset split is a list of dictionaries, where each dictionary is an exampl
 
 ### Train LMs (Optional)
 
-In the paper we considered two different data settings: with section titles (W/ Title) and without section titles (W/O Title). We need to first process data according to these settings, using the script `scripts/data/process_data.py`. Note that this section can be skipped if you download the pretrained language models listed above.
+In the paper we considered two different data settings: with section titles (W/ Title) and without section titles (W/O Title). We need to first process data according to these settings, using the script `scripts/data/process_data_for_LMs.py`. Note that this section can be skipped if you download the pretrained language models listed above.
 
 ```
-python scripts/data/process_data.py --dataset_folder data/PubMed/
-python scripts/data/process_data.py --dataset_folder data/ArXiv/
-python scripts/data/process_data.py --dataset_folder data/Wiki/
+python scripts/data/process_data_for_LMs.py --dataset_folder data/PubMed/
 ```
 
 Next, we use huggingface's Transformer library for training (finetuning) language models:
@@ -42,7 +40,7 @@ git checkout de635af3f1ef740aa32f53a91473269c6435e19e
 pip install --editable .
 ```
 
-In particular, we use the training script in `examples/legacy`:
+In particular, we use the training script `examples/legacy/run_language_modeling.py`:
 
 ```
 cd examples/legacy
@@ -123,6 +121,22 @@ For the W/O Title setting:
 Note that in the paper we used 10k samples, which requires setting `--num_samples` to 10000 (it takes much longer to generate 10k samples so we used 100 in the above example commands).
 
 
+### Train Posterior Inferencers (Optional)
+
+We use huggingface transformer's script `examples/pytorch/text-classification/run_glue.py` to train a posterior inferencer. First, we need to prepare data according to its expected format, using the script `scripts/data/process_data_for_posterior_inferencers.py`. Note that this section can be skipped if you download the pretrained posterior inferencers listed in the beginning of this document.
+
+```
+python scripts/data/process_data_for_posterior_inferencers.py --dataset_folder data/PubMed/
+```
+
+
 ### Posterior Inference
 
-The goal of posterior inference is to infer the section titles z conditioned on section text x. We use a BERT-based classifier and use the MAP value of z instead of maintaining a full distribution over z.
+The goal of posterior inference is to infer the section titles z conditioned on section text x. We use a BERT-based classifier and use the MAP value of z instead of maintaining a full distribution over z:
+
+```
+python scripts/posterior_inference/infer_section_titles.py \
+       --posterior_inferencer_checkpoint posterior_inferencer_checkpoints/PubMed \
+       --input_file generation.pubmed.w_title.gpt2.json \
+       --output_file predicted_z.generation.pubmed.w_title.gpt2.json
+```
