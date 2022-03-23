@@ -5,7 +5,16 @@ Here we provide code to reproduce our results. We provide all training data and 
 ## Prerequisites
 
 * [Pytorch](https://pytorch.org/get-started/locally/)
-* [Transformer](https://github.com/huggingface/transformers/tree/de635af3f1ef740aa32f53a9173269c6435e19e)
+* [Transformers](https://github.com/huggingface/transformers/tree/de635af3f1ef740aa32f53a9173269c6435e19e)
+
+We use a particular version of Transformers:
+
+```
+git clone https://github.com/huggingface/transformers.git
+cd transformers
+git checkout de635af3f1ef740aa32f53a91473269c6435e19e
+pip install --editable .
+```
 
 
 ## Datasets & Pretrained Models
@@ -37,19 +46,10 @@ In the paper we considered two different data settings: with section titles (W/ 
 python scripts/data/process_data_for_LMs.py --dataset_folder data/PubMed/
 ```
 
-Next, we use huggingface's Transformer library for training (finetuning) language models:
+Next, we use huggingface's Transformers library for training (finetuning) language models. In particular, we use the training script `examples/legacy/run_language_modeling.py`:
 
 ```
-git clone https://github.com/huggingface/transformers.git
-cd transformers
-git checkout de635af3f1ef740aa32f53a91473269c6435e19e
-pip install --editable .
-```
-
-In particular, we use the training script `examples/legacy/run_language_modeling.py`:
-
-```
-cd examples/legacy
+cd transformers/examples/legacy
 ```
 
 We will use the dataset PubMed to illustrate training (the commands for other datasets are the same). To train a GPT-2-based language model, we use the below command:
@@ -139,7 +139,7 @@ We use huggingface transformer's script `examples/pytorch/text-classification/ru
 python scripts/data/process_data_for_posterior_inferencers.py --dataset_folder data/PubMed/
 ```
 
-Next, we can train a posterior inferencer (starting from the root directory of huggingface's Transformer):
+Next, we can train a posterior inferencer (starting from the root directory of huggingface's Transformers):
 
 ```
 cd examples/pytorch/text-classification
