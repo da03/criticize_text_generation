@@ -1,6 +1,10 @@
 # Model Criticism for Text Generation
 
-Here we provide code to reproduce our results. We provide all training data and training scripts, as well as all pretrained models used in our paper. Our code is built on top of [Transformers](https://github.com/huggingface/transformers/tree/de635af3f1ef740aa32f53a91473269c6435e19e), [fairseq](https://github.com/pytorch/fairseq), and [pytorch-struct](https://github.com/harvardnlp/pytorch-struct).
+Here we provide code to reproduce our results for "Critiquing Discourse Coherence". We provide all training data and training scripts, as well as all pretrained models used in our paper. Our code is built on top of [Transformers](https://github.com/huggingface/transformers/tree/de635af3f1ef740aa32f53a91473269c6435e19e), [fairseq](https://github.com/pytorch/fairseq), and [pytorch-struct](https://github.com/harvardnlp/pytorch-struct).
+
+## Instructions for Other Experiments
+
+Instructions for "A Surprising Text Generation Failure" can be found at [README_HSMM.md](README_HSMM.md), and instructions for "Critiquing Topic Correlations" can be found at [README_CTM.md](README_CTM.md).
 
 ## Prerequisites
 
