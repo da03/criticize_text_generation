@@ -48,7 +48,7 @@ export WORKING_DIR=$(pwd)
 In the paper we considered two different data settings: with section titles (W/ Title) and without section titles (W/O Title). We need to first process data according to these settings, using the script `scripts/data/process_data_for_LMs.py`. Note that this section can be skipped if you download the pretrained language models listed above.
 
 ```
-python scripts/data/process_data_for_LMs.py --dataset_folder data/PubMed/
+python scripts/data/process_data_for_LMs.py --dataset_folder ${WORKING_DIR}/data/PubMed/
 ```
 
 Next, we use huggingface's Transformers library for training (finetuning) language models. In particular, we use the training script `examples/legacy/run_language_modeling.py`:
@@ -141,7 +141,11 @@ Note that in the paper we used 10k samples, which requires setting `--num_sample
 We use David Blei and John Lafferty's correlated topic model implementation [CTM](http://www.cs.columbia.edu/~blei/ctm-c/) to learn a critic generative process, which will be used for posterior inference. First, we need to prepare data according to its expected format, using the script `scripts/data/process_data_for_posterior_inferencers.py`. Note that this section can be skipped if you download the pretrained critic generative processes listed in the beginning of this document.
 
 ```
-python scripts/data/process_data_for_posterior_inferencers.py --dataset_folder data/PubMed/
+cd ${WORKING_DIR}/critique_topic_correlations
+```
+
+```
+python scripts/data/process_data_for_critics.py --dataset_folder ${WORKING_DIR}/data/PubMed/
 ```
 
 Next, we can train a posterior inferencer (starting from the root directory of huggingface's Transformers):
