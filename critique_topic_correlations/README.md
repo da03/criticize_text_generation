@@ -1,10 +1,10 @@
 # Model Criticism for Text Generation
 
-Here we provide code to reproduce our results for "Critiquing Discourse Coherence". We provide all training data and training scripts, as well as all pretrained models used in our paper. Our code is built on top of [Huggingface Transformers](https://github.com/huggingface/transformers/tree/de635af3f1ef740aa32f53a91473269c6435e19e).
+Here we provide code to reproduce our results for "Critiquing Topic Correlations". We provide all training data and training scripts, as well as all pretrained models used in our paper. Our code is built on top of [Huggingface Transformers](https://github.com/huggingface/transformers/tree/de635af3f1ef740aa32f53a91473269c6435e19e), David Blei and John Lafferty's [CTM](http://www.cs.columbia.edu/~blei/ctm-c/).
 
 ## Instructions for Other Experiments
 
-Instructions for "A Surprising Text Generation Failure" can be found at [synthetic/README.md](synthetic/README.md), and instructions for `Critiquing Topic Correlations'' can be found at [critique_topic_correlations/README.md](critique_topic_correlations/README.md).
+Instructions for "A Surprising Text Generation Failure" can be found at [synthetic/README.md](/synthetic/README.md), and instructions for "Critiquing Discourse Coherence" can be found at [README.md](/README.md).
 
 ## Prerequisites
 
@@ -24,9 +24,9 @@ pip install --editable .
 
 ## Datasets & Pretrained Models
 
-* PubMed: [data](https://drive.google.com/file/d/1qIIJBc6JhxSipsdz7X9XgEPsBPrB5PDS/view?usp=sharing) [GPT-2 LM](https://drive.google.com/file/d/1MQleq0eBW3vxQU0fd_xTIAMPuSakL4vu/view?usp=sharing) [GPT-Neo LM](https://drive.google.com/file/d/13QbzOCnpjQuhoZ4ZSFMz87FmQ7CLPPCf/view?usp=sharing) [Critic](https://drive.google.com/file/d/1hiDAnPjCKN_lUyY9Kr-5uv4qm-NiKAbn/view?usp=sharing) [Posterior Inferencer](https://drive.google.com/file/d/1-BwbijwD6nIKOMOkV3FOWqRHdHKIuaqY/view?usp=sharing)
-* ArXiv: [data](https://drive.google.com/file/d/1Ujn84S-37r0I1z7Uhq-8aCvo5RIaSobs/view?usp=sharing) [GPT-2 LM](https://drive.google.com/file/d/17mNJoUwROEo0OWSF2llYXLsT4_1SnCrQ/view?usp=sharing) [GPT-Neo LM](https://drive.google.com/file/d/1bbofIpumvf_1StMf59pUR9-Lvln6qT1b/view?usp=sharing) [Critic](https://drive.google.com/file/d/1S8C5TOux6Z9t9SN-hqU2B1hhtjGtLXOD/view?usp=sharing) [Posterior Inferencer](https://drive.google.com/file/d/1mD98cWmpD2ja4H3gIQD_2BT1UzKor74U/view?usp=sharing)
-* Wiki: [data](https://drive.google.com/file/d/1stCsnajY-DB9U2-LS32tmdmsZJHtAxte/view?usp=sharing) [GPT-2 LM](https://drive.google.com/file/d/1u4-ezV74UIec6uTkMxciX8oNkHGCtq1y/view?usp=sharing) [GPT-Neo LM](https://drive.google.com/file/d/1V6S05FxaKXGff5khe87uJbsdsCVTCkGl/view?usp=sharing) [Critic](https://drive.google.com/file/d/1S-X-K8LefBM5XSft7nw6OExiG3ShlCvl/view?usp=sharing) [Posterior Inferencer](https://drive.google.com/file/d/118DJq-C5BMP83tuoZSQPc337G7_n4WDR/view?usp=sharing)
+* PubMed: [data](https://drive.google.com/file/d/1qIIJBc6JhxSipsdz7X9XgEPsBPrB5PDS/view?usp=sharing) [GPT-2 LM](https://drive.google.com/file/d/1MQleq0eBW3vxQU0fd_xTIAMPuSakL4vu/view?usp=sharing) [GPT-Neo LM](https://drive.google.com/file/d/13QbzOCnpjQuhoZ4ZSFMz87FmQ7CLPPCf/view?usp=sharing) [Critic](https://drive.google.com/file/d/1SMnYe7qfpSOdhACK3xikUhnZYyOrgJxk/view?usp=sharing)
+* ArXiv: [data](https://drive.google.com/file/d/1Ujn84S-37r0I1z7Uhq-8aCvo5RIaSobs/view?usp=sharing) [GPT-2 LM](https://drive.google.com/file/d/17mNJoUwROEo0OWSF2llYXLsT4_1SnCrQ/view?usp=sharing) [GPT-Neo LM](https://drive.google.com/file/d/1bbofIpumvf_1StMf59pUR9-Lvln6qT1b/view?usp=sharing) [Critic](https://drive.google.com/file/d/1ixP-QY_Oe7t9gDz2Z7OJv-u9H9LQE1mh/view?usp=sharing)
+* Wiki: [data](https://drive.google.com/file/d/1stCsnajY-DB9U2-LS32tmdmsZJHtAxte/view?usp=sharing) [GPT-2 LM](https://drive.google.com/file/d/1u4-ezV74UIec6uTkMxciX8oNkHGCtq1y/view?usp=sharing) [GPT-Neo LM](https://drive.google.com/file/d/1V6S05FxaKXGff5khe87uJbsdsCVTCkGl/view?usp=sharing) [Critic](https://drive.google.com/file/d/1Bg9YnAN1JHjgj6jYdTSh5FNjtCgzydMo/view?usp=sharing)
 
 
 ### Data Format
@@ -54,7 +54,6 @@ python scripts/data/process_data_for_LMs.py --dataset_folder data/PubMed/
 Next, we use huggingface's Transformers library for training (finetuning) language models. In particular, we use the training script `examples/legacy/run_language_modeling.py`:
 
 ```
-cd $HF_DIR
 cd transformers/examples/legacy
 ```
 
@@ -136,17 +135,10 @@ For the W/O Title setting:
 
 Note that in the paper we used 10k samples, which requires setting `--num_samples` to 10000 (it takes much longer to generate 10k samples so we used 100 in the above example commands).
 
+
 ### Fit Critic Generative Processes (Optional)
 
-We need to fit the critic distribution $P_c(z)$ (this step is optional if you use the pretrained critic models):
-
-```
-python scripts/criticize/fit_critic.py --dataset_folder data/PubMed/ --output_folder critic_checkpoints/PubMed/
-```
-
-### Train Posterior Inferencers (Optional)
-
-We use huggingface transformer's script `examples/pytorch/text-classification/run_glue.py` to train a posterior inferencer. First, we need to prepare data according to its expected format, using the script `scripts/data/process_data_for_posterior_inferencers.py`. Note that this section can be skipped if you download the pretrained posterior inferencers listed in the beginning of this document.
+We use David Blei and John Lafferty's correlated topic model implementation [CTM](http://www.cs.columbia.edu/~blei/ctm-c/) to learn a critic generative process, which will be used for posterior inference. First, we need to prepare data according to its expected format, using the script `scripts/data/process_data_for_posterior_inferencers.py`. Note that this section can be skipped if you download the pretrained critic generative processes listed in the beginning of this document.
 
 ```
 python scripts/data/process_data_for_posterior_inferencers.py --dataset_folder data/PubMed/
@@ -155,7 +147,6 @@ python scripts/data/process_data_for_posterior_inferencers.py --dataset_folder d
 Next, we can train a posterior inferencer (starting from the root directory of huggingface's Transformers):
 
 ```
-cd $HF_DIR
 cd examples/pytorch/text-classification
 ```
 
@@ -175,6 +166,7 @@ python run_glue.py \
     --overwrite_output_dir > ${WORKING_DIR}/log.pubmed.trainPosteriorInferencer 2>&1&
 ```
 
+
 ### Posterior Inference
 
 The goal of posterior inference is to infer the section titles z conditioned on section text x. We use a BERT-based classifier and use the MAP value of z instead of maintaining a full distribution over z:
@@ -188,11 +180,17 @@ python scripts/posterior_inference/infer_section_titles.py \
 
 ### Model Criticism in Latent Space
 
-Now we are ready to criticize in the latent space.
+Now we are ready to criticize in the latent space. First, we need to fit the criticizer distribution $P_c(z)$:
+
+```
+python scripts/criticize/fit_criticizer.py --dataset_folder data/PubMed/ --output_folder criticizer/PubMed/
+```
+
+Next, we evaluate LM generations:
 
 ```
 python scripts/criticize/criticize.py \
-       --critic critic_checkpoints/PubMed/ \
+       --criticizer criticizer/PubMed/ \
        --input_file predicted_z.generation.pubmed.w_title.gpt2.json
 ```
 

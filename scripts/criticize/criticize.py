@@ -6,9 +6,9 @@ import argparse
 
 import torch
 
-parser = argparse.ArgumentParser(description='Fit a criticizer P_c(z) on the training data.')
-parser.add_argument('--criticizer', type=str, required=True,
-                    help='Folder containing criticizer.pt')
+parser = argparse.ArgumentParser(description='Fit a critic P_c(z) on the training data.')
+parser.add_argument('--critic', type=str, required=True,
+                    help='Folder containing critic.pt')
 parser.add_argument('--input_file', type=str, required=True,
                     help='Input json file containing predicted_section_names.')
 parser.add_argument('--criticised_field', type=str, default='predicted_section_names',
@@ -38,7 +38,7 @@ def eval_latent_PPL(model, data, criticised_field):
 
 def main(args):
     # Load model
-    model = torch.load(os.path.join(args.criticizer, 'criticizer.pt'))
+    model = torch.load(os.path.join(args.critic, 'critic.pt'))
 
     # Criticise text
     data = json.load(open(args.input_file))

@@ -6,11 +6,11 @@ import argparse
 
 import torch
 
-parser = argparse.ArgumentParser(description='Fit a criticizer P_c(z) on the training data.')
+parser = argparse.ArgumentParser(description='Fit a critic P_c(z) on the training data.')
 parser.add_argument('--dataset_folder', type=str, required=True,
                     help='Folder containing train.json, val.json, and test.json.')
 parser.add_argument('--output_folder', type=str, required=True,
-                    help='Output folder for the learned criticizer.')
+                    help='Output folder for the learned critic.')
 parser.add_argument('--deltas', type=float, nargs='+', default=[0, 1],
                             help='Smoothing constant values to optimize.')
 parser.add_argument('--seed', type=int, default=1234,
@@ -87,7 +87,7 @@ def main(args):
     # Save model
     model = best_model
     os.makedirs(args.output_folder, exist_ok=True)
-    torch.save(model, os.path.join(args.output_folder, 'criticizer.pt'))
+    torch.save(model, os.path.join(args.output_folder, 'critic.pt'))
 
 
     # Evaluate model
