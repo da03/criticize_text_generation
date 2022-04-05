@@ -92,11 +92,12 @@ def main(args):
     stopwords = load_stopwords(args.stopwords_file)
     ignore_containing = args.ignore_containing
 
-    vocab_file = train_file + '.CTM.vocab'
     compatible_mode = False
     if args.compatible_with_checkpoints and 'wiki' in dataset_folder.lower():
         compatible_mode = True
     vocab = construct_vocab(train_file, vocab_file, stopwords, word_df, ignore_containing, args.min_term_freq, args.max_doc_freq_ratio, compatible_mode)
+
+    vocab_file = train_file + '.CTM.vocab'
     with open(vocab_file, 'w') as fout:
         for word in vocab:
             fout.write(word + '\n')

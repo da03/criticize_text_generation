@@ -10,6 +10,17 @@ Instructions for "A Surprising Text Generation Failure" can be found at [synthet
 
 * [Pytorch](https://pytorch.org/get-started/locally/)
 * [Transformers](https://github.com/huggingface/transformers/tree/de635af3f1ef740aa32f53a9173269c6435e19e)
+* [CTM](http://www.cs.columbia.edu/~blei/ctm-c/)
+
+We use CTM for learning the critic generative process and for performing posterior inference.
+
+```
+wget http://www.cs.columbia.edu/~blei/ctm-c/ctm-dist.tgz
+tar zxf ctm-dist.tgz
+cd ctm-dist
+make
+export CTM_DIR=$(pwd)
+```
 
 We use a particular version of Transformers:
 
@@ -144,30 +155,33 @@ We use David Blei and John Lafferty's correlated topic model implementation [CTM
 cd ${WORKING_DIR}/critique_topic_correlations
 ```
 
-```
-python scripts/data/process_data_for_critics.py --dataset_folder ${WORKING_DIR}/data/PubMed/
-```
-
-Next, we can train a posterior inferencer (starting from the root directory of huggingface's Transformers):
+First, we need to build the vocabulary. By default we consider word types that appear in more than 50% of documents as stopwords, and we also remove words that appear fewer than 5 times.
 
 ```
-cd examples/pytorch/text-classification
+python scripts/data/build_vocab_for_critics.py --dataset_folder ${WORKING_DIR}/data/PubMed --compatible_with_checkpoints
 ```
 
+Based on the constructed vocabulary, we can convert words to word ids and generate input files to CTM.
+
 ```
-python run_glue.py \
-    --model_name_or_path=bert-base-cased \
-    --do_train \
-    --do_eval \
-    --train_file=${WORKING_DIR}/data/PubMed/train.posterior_inferencer.json \
-    --validation_file=${WORKING_DIR}/data/PubMed/val.posterior_inferencer.json \
-    --max_seq_length=512 \
-    --per_gpu_train_batch_size=32 \
-    --learning_rate=2e-5 \
-    --num_train_epochs=3.0 \
-    --output_dir=${WORKING_DIR}/posterior_inferencer_checkpoints/PubMed \
-    --save_total_limit=5 \
-    --overwrite_output_dir > ${WORKING_DIR}/log.pubmed.trainPosteriorInferencer 2>&1&
+python scripts/data/process_data_for_critics.py --vocab_file ${WORKING_DIR}/data/PubMed/train.json.CTM.vocab --data_file ${WORKING_DIR}/data/PubMed/train.json 
+python scripts/data/process_data_for_critics.py --vocab_file ${WORKING_DIR}/data/PubMed/train.json.CTM.vocab --data_file ${WORKING_DIR}/data/PubMed/val.json 
+python scripts/data/process_data_for_critics.py --vocab_file ${WORKING_DIR}/data/PubMed/train.json.CTM.vocab --data_file ${WORKING_DIR}/data/PubMed/test.json 
+```
+
+### Posterior Inference
+
+We use CTM for posterior inference.
+
+```
+cd ${CTM_DIR}
+```
+
+First, we perform posterior inference on the ground truth data.
+
+```
+mkdir -p ${WORKING_DIR}/critique_topic_correlations/results/PubMed
+./ctm inf ${WORKING_DIR}/data/PubMed/test.json.CTM.id ${WORKING_DIR}/critique_topic_correlations/critic_checkpoints/PubMed/final ${WORKING_DIR}/critique_topic_correlations/results/PubMed/test inf-settings.txt
 ```
 
 
