@@ -168,7 +168,16 @@ python scripts/data/process_data_for_critics.py --vocab_file ${WORKING_DIR}/data
 python scripts/data/process_data_for_critics.py --vocab_file ${WORKING_DIR}/data/PubMed/train.json.CTM.vocab --data_file ${WORKING_DIR}/data/PubMed/val.json 
 python scripts/data/process_data_for_critics.py --vocab_file ${WORKING_DIR}/data/PubMed/train.json.CTM.vocab --data_file ${WORKING_DIR}/data/PubMed/test.json 
 ```
+
+To criticize language model generations, we need to process them similarly. For example, to criticize `generation.pubmed.wo_title.gpt2.json`, we need to
+
+```
+python scripts/data/process_data_for_critics.py --vocab_file ${WORKING_DIR}/data/PubMed/train.json.CTM.vocab --data_file ${WORKING_DIR}/generation.pubmed.wo_title.gpt2.json
+```
+
+
 ### Fit Critic Generative Processes (Optional)
+python ctm-topics.py arxiv100Fix/final-log-beta.dat /n/holyscratch01/rush_lab/Users/yuntian/hierarchy/arxiv-final-2k-dataset/train_flat_nonewline.txt.addspecial.filter.ctm.vocab arxiv_topics.txt 25
 
 ### Posterior Inference
 
@@ -185,28 +194,35 @@ mkdir -p ${WORKING_DIR}/critique_topic_correlations/results/PubMed
 ./ctm inf ${WORKING_DIR}/data/PubMed/test.json.CTM.id ${WORKING_DIR}/critique_topic_correlations/critic_checkpoints/PubMed/final ${WORKING_DIR}/critique_topic_correlations/results/PubMed/test inf-settings.txt
 ```
 
-The inference results will be written to `results/PubMed/`.
+Next, we perform posterior inference on language model generations.
 
-Next, we perform posterior inference on the 
+```
+./ctm inf ${WORKING_DIR}/generation.pubmed.wo_title.gpt2.json.CTM.id ${WORKING_DIR}/critique_topic_correlations/critic_checkpoints/PubMed/final ${WORKING_DIR}/critique_topic_correlations/results/PubMed/wo_title.gpt2 inf-settings.txt
+```
+
+The inference results will be written to `results/PubMed/`.
 
 
 ### Model Criticism in Latent Space
 
-Now we are ready to criticize in the latent space. First, we need to fit the criticizer distribution $P_c(z)$:
+Now we are ready to criticize in the latent space.
 
 ```
-python scripts/criticize/fit_criticizer.py --dataset_folder data/PubMed/ --output_folder criticizer/PubMed/
+cd ${WORKING_DIR}/critique_topic_correlations
 ```
 
-Next, we evaluate LM generations:
+ python evaluate_llh_lambda_compare_baseline.py 100 pubmed100FixRerun/final-mu.dat pubmed100FixRerun/final-inv-cov.dat  pubmed100FixRerun/final-cov.dat  pubmed100Fix/test-lambda.dat pubmed100Fix/gpt2-lambda.dat pubmed100Fix/gpt2-arxiv-lambda.dat cov_pubmed_arxivbaseline
 
 ```
 python scripts/criticize/criticize.py \
-       --criticizer criticizer/PubMed/ \
-       --input_file predicted_z.generation.pubmed.w_title.gpt2.json
+       --criticizer critic_checkpoints/PubMed/ \
+       --real_data results/PubMed/test-lambda.dat \
+       --LM_generations results/PubMed/wo_title.gpt2-lambda.dat \
+       --visualize_cov_path results/PubMed/cov-test-wo_title.gpt2.png \
+       --hierarchical_clustering_for_vis
 ```
 
-The output will contain the latent PPL for the LM generations.
+The latent NLLs will be printed out, and the visualization of covariance matrices will be stored in `results/PubMed/cov-test-wo_title.gpt2.png`.
 
 
 ## Acknowledgements
