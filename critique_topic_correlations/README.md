@@ -147,9 +147,9 @@ For the W/O Title setting:
 Note that in the paper we used 10k samples, which requires setting `--num_samples` to 10000 (it takes much longer to generate 10k samples so we used 100 in the above example commands).
 
 
-### Fit Critic Generative Processes (Optional)
+### Process Data for Critic Training/Inference
 
-We use David Blei and John Lafferty's correlated topic model implementation [CTM](http://www.cs.columbia.edu/~blei/ctm-c/) to learn a critic generative process, which will be used for posterior inference. First, we need to prepare data according to its expected format, using the script `scripts/data/process_data_for_posterior_inferencers.py`. Note that this section can be skipped if you download the pretrained critic generative processes listed in the beginning of this document.
+We use David Blei and John Lafferty's correlated topic model implementation [CTM](http://www.cs.columbia.edu/~blei/ctm-c/) for learning a critic generative process and for posterior inference. We need to prepare data according to its expected format first.
 
 ```
 cd ${WORKING_DIR}/critique_topic_correlations
@@ -168,6 +168,7 @@ python scripts/data/process_data_for_critics.py --vocab_file ${WORKING_DIR}/data
 python scripts/data/process_data_for_critics.py --vocab_file ${WORKING_DIR}/data/PubMed/train.json.CTM.vocab --data_file ${WORKING_DIR}/data/PubMed/val.json 
 python scripts/data/process_data_for_critics.py --vocab_file ${WORKING_DIR}/data/PubMed/train.json.CTM.vocab --data_file ${WORKING_DIR}/data/PubMed/test.json 
 ```
+### Fit Critic Generative Processes (Optional)
 
 ### Posterior Inference
 
@@ -184,17 +185,10 @@ mkdir -p ${WORKING_DIR}/critique_topic_correlations/results/PubMed
 ./ctm inf ${WORKING_DIR}/data/PubMed/test.json.CTM.id ${WORKING_DIR}/critique_topic_correlations/critic_checkpoints/PubMed/final ${WORKING_DIR}/critique_topic_correlations/results/PubMed/test inf-settings.txt
 ```
 
+The inference results will be written to `results/PubMed/`.
 
-### Posterior Inference
+Next, we perform posterior inference on the 
 
-The goal of posterior inference is to infer the section titles z conditioned on section text x. We use a BERT-based classifier and use the MAP value of z instead of maintaining a full distribution over z:
-
-```
-python scripts/posterior_inference/infer_section_titles.py \
-       --posterior_inferencer_checkpoint posterior_inferencer_checkpoints/PubMed \
-       --input_file generation.pubmed.w_title.gpt2.json \
-       --output_file predicted_z.generation.pubmed.w_title.gpt2.json
-```
 
 ### Model Criticism in Latent Space
 

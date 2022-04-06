@@ -37,7 +37,7 @@ def process_data(filename, filename_out, stoi, shuffle=False):
             word_ids = [stoi[word] for word in words if word in stoi]
             counts = collections.Counter(word_ids)
             s = ' '.join([f'{key}:{counts[key]}' for key in counts])
-            total = len(s)
+            total = len(counts)
             if total == 0:
                 continue
             s = f'{total} {s}\n'
