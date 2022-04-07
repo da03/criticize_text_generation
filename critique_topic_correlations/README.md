@@ -8,6 +8,8 @@ Instructions for "A Surprising Text Generation Failure" can be found at [synthet
 
 ## Prerequisites
 
+The code has been tested on Python 3.8. In addition, we need
+
 * [Pytorch](https://pytorch.org/get-started/locally/)
 * [Transformers](https://github.com/huggingface/transformers/tree/de635af3f1ef740aa32f53a9173269c6435e19e)
 * [CTM](http://www.cs.columbia.edu/~blei/ctm-c/)
@@ -178,7 +180,28 @@ python scripts/data/process_data_for_critics.py --vocab_file ${WORKING_DIR}/data
 
 
 ### Fit Critic Generative Processes (Optional)
-python ctm-topics.py arxiv100Fix/final-log-beta.dat /n/holyscratch01/rush_lab/Users/yuntian/hierarchy/arxiv-final-2k-dataset/train_flat_nonewline.txt.addspecial.filter.ctm.vocab arxiv_topics.txt 25
+
+To fit the critic generative process, we use CTM.
+
+```
+cd ${CTM_DIR}
+```
+
+We use 100 topics for our experiments.
+
+```
+./ctm est ${WORKING_DIR}/data/PubMed/train.json.CTM.id 100 seed ${WORKING_DIR}/critique_topic_correlations/critic_checkpoints/PubMed/ settings.txt
+```
+
+The learned critic checkpoints will be stored in the folder `critic_checkpoints/PubMed`.
+
+To check if the learned critic is reasonable, we can visualize its topics.
+
+```
+cd ${WORKING_DIR}/critique_topic_correlations
+python scripts/utils/print_topics.py --critic critic_checkpoints/PubMed/ \
+                                     --vocab_file ${WORKING_DIR}/data/PubMed/train.json.CTM.vocab
+```
 
 ### Posterior Inference
 
@@ -211,8 +234,6 @@ Now we are ready to criticize in the latent space.
 ```
 cd ${WORKING_DIR}/critique_topic_correlations
 ```
-
- python evaluate_llh_lambda_compare_baseline.py 100 pubmed100FixRerun/final-mu.dat pubmed100FixRerun/final-inv-cov.dat  pubmed100FixRerun/final-cov.dat  pubmed100Fix/test-lambda.dat pubmed100Fix/gpt2-lambda.dat pubmed100Fix/gpt2-arxiv-lambda.dat cov_pubmed_arxivbaseline
 
 ```
 python scripts/criticize/criticize.py \
