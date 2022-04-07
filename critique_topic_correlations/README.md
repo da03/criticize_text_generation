@@ -11,6 +11,7 @@ Instructions for "A Surprising Text Generation Failure" can be found at [synthet
 * [Pytorch](https://pytorch.org/get-started/locally/)
 * [Transformers](https://github.com/huggingface/transformers/tree/de635af3f1ef740aa32f53a9173269c6435e19e)
 * [CTM](http://www.cs.columbia.edu/~blei/ctm-c/)
+* seaborn (`pip install seaborn`)
 
 We use CTM for learning the critic generative process and for performing posterior inference.
 
@@ -215,11 +216,11 @@ cd ${WORKING_DIR}/critique_topic_correlations
 
 ```
 python scripts/criticize/criticize.py \
-       --criticizer critic_checkpoints/PubMed/ \
-       --real_data results/PubMed/test-lambda.dat \
-       --LM_generations results/PubMed/wo_title.gpt2-lambda.dat \
+       --critic critic_checkpoints/PubMed/ \
+       --real_data_lambda results/PubMed/test-lambda.dat \
+       --LM_generations_lambda results/PubMed/wo_title.gpt2-lambda.dat \
        --visualize_cov_path results/PubMed/cov-test-wo_title.gpt2.png \
-       --hierarchical_clustering_for_vis
+       --hierarchical_clustering
 ```
 
 The latent NLLs will be printed out, and the visualization of covariance matrices will be stored in `results/PubMed/cov-test-wo_title.gpt2.png`.

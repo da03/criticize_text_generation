@@ -6,7 +6,7 @@ import argparse
 
 import torch
 
-parser = argparse.ArgumentParser(description='Fit a critic P_c(z) on the training data.')
+parser = argparse.ArgumentParser(description='Compute Latent PPL.')
 parser.add_argument('--critic', type=str, required=True,
                     help='Folder containing critic.pt')
 parser.add_argument('--input_file', type=str, required=True,
