@@ -1,15 +1,18 @@
 # Model Criticism for Text Generation
 
-Here we provide code to reproduce our results for "Critiquing Topic Correlations". We provide all training data and training scripts, as well as all pretrained models used in our paper. Our code is built on top of [Transformers](https://github.com/huggingface/transformers/tree/de635af3f1ef740aa32f53a91473269c6435e19e), [fairseq](https://github.com/pytorch/fairseq), and [pytorch-struct](https://github.com/harvardnlp/pytorch-struct).
+Here we provide code to reproduce our results for "A Surprising Text Generation Failure". We provide all training data and training scripts, as well as all pretrained models used in our paper. Our code is built on top of [Transformers](https://github.com/huggingface/transformers/tree/de635af3f1ef740aa32f53a91473269c6435e19e), [fairseq](https://github.com/pytorch/fairseq), and [pytorch-struct](https://github.com/harvardnlp/pytorch-struct).
 
 ## Instructions for Other Experiments
 
-Instructions for "A Surprising Text Generation Failure" can be found at [README_HSMM.md](README_HSMM.md), and instructions for "Critiquing Discourse Coherence" can be found at [README.md](README.md).
+Instructions for "Critiquing Discourse Coherence" can be found at [../README.md](../README.md), and instructions for "Critiquing Discourse Coherence" can be found at [../critique_topic_correlations/README.md](../critique_topic_correlations/README.md).
 
 ## Prerequisites
 
+The code has been tested on Python 3.8. In addition, we need
+
 * [Pytorch](https://pytorch.org/get-started/locally/)
 * [Transformers](https://github.com/huggingface/transformers/tree/de635af3f1ef740aa32f53a9173269c6435e19e)
+* [pytorch-struct](https://github.com/harvardnlp/pytorch-struct)
 
 We use a particular version of Transformers:
 
@@ -21,18 +24,14 @@ pip install --editable .
 ```
 
 
-## Datasets & Pretrained Models
+## Dataset & Pretrained Models
 
-* PubMed: [data](https://drive.google.com/file/d/1qIIJBc6JhxSipsdz7X9XgEPsBPrB5PDS/view?usp=sharing) [GPT-2 LM](https://drive.google.com/file/d/1MQleq0eBW3vxQU0fd_xTIAMPuSakL4vu/view?usp=sharing) [GPT-Neo LM](https://drive.google.com/file/d/13QbzOCnpjQuhoZ4ZSFMz87FmQ7CLPPCf/view?usp=sharing) [Posterior Inferencer](https://drive.google.com/file/d/1-BwbijwD6nIKOMOkV3FOWqRHdHKIuaqY/view?usp=sharing)
-* ArXiv: [data](https://drive.google.com/file/d/1Ujn84S-37r0I1z7Uhq-8aCvo5RIaSobs/view?usp=sharing) [GPT-2 LM](https://drive.google.com/file/d/17mNJoUwROEo0OWSF2llYXLsT4_1SnCrQ/view?usp=sharing) [GPT-Neo LM](https://drive.google.com/file/d/1bbofIpumvf_1StMf59pUR9-Lvln6qT1b/view?usp=sharing) [Posterior Inferencer](https://drive.google.com/file/d/1mD98cWmpD2ja4H3gIQD_2BT1UzKor74U/view?usp=sharing)
-* Wiki: [data](https://drive.google.com/file/d/1stCsnajY-DB9U2-LS32tmdmsZJHtAxte/view?usp=sharing) [GPT-2 LM](https://drive.google.com/file/d/1u4-ezV74UIec6uTkMxciX8oNkHGCtq1y/view?usp=sharing) [GPT-Neo LM](https://drive.google.com/file/d/1V6S05FxaKXGff5khe87uJbsdsCVTCkGl/view?usp=sharing) [Posterior Inferencer](https://drive.google.com/file/d/118DJq-C5BMP83tuoZSQPc337G7_n4WDR/view?usp=sharing)
+* [data](https://drive.google.com/file/d/1qIIJBc6JhxSipsdz7X9XgEPsBPrB5PDS/view?usp=sharing) [GPT-2 LM](https://drive.google.com/file/d/1MQleq0eBW3vxQU0fd_xTIAMPuSakL4vu/view?usp=sharing) [GPT-Neo LM](https://drive.google.com/file/d/13QbzOCnpjQuhoZ4ZSFMz87FmQ7CLPPCf/view?usp=sharing) [Posterior Inferencer](https://drive.google.com/file/d/1-BwbijwD6nIKOMOkV3FOWqRHdHKIuaqY/view?usp=sharing)
 
-The datasets PubMed and ArXiv are adapted from [Cohan et. al. 2018](https://aclanthology.org/N18-2097/). Wiki is processed based on the English Wikipedia [dumped on Dec 1, 2021](https://dumps.wikimedia.org/enwiki/20211201/).
 
 ### Data Format
 
 Each dataset split is a list of dictionaries, where each dictionary is an example containing two fields: "sections", which is a list of section texts, and "section_names", which is a list of section titles.
-
 
 ## Usage
 
@@ -41,6 +40,8 @@ First, we setup an environment variable holding the absolute path of the current
 ```
 export WORKING_DIR=$(pwd)
 ```
+
+### Generate Dataset (Optional)
 
 ### Train LMs (Optional)
 

@@ -4,7 +4,7 @@ Here we provide code to reproduce our results for "Critiquing Topic Correlations
 
 ## Instructions for Other Experiments
 
-Instructions for "A Surprising Text Generation Failure" can be found at [synthetic/README.md](/synthetic/README.md), and instructions for "Critiquing Discourse Coherence" can be found at [README.md](/README.md).
+Instructions for "A Surprising Text Generation Failure" can be found at [../synthetic/README.md](../synthetic/README.md), and instructions for "Critiquing Discourse Coherence" can be found at [../README.md](../README.md).
 
 ## Prerequisites
 
