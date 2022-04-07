@@ -13,7 +13,7 @@ The code has been tested on Python 3.8. In addition, we need
 * [Pytorch](https://pytorch.org/get-started/locally/)
 * [Transformers](https://github.com/huggingface/transformers/tree/de635af3f1ef740aa32f53a9173269c6435e19e)
 * [CTM](http://www.cs.columbia.edu/~blei/ctm-c/)
-* seaborn (`pip install seaborn`)
+* [seaborn](https://seaborn.pydata.org/installing.html)
 
 We use CTM for learning the critic generative process and for performing posterior inference.
 
