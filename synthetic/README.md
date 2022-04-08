@@ -43,6 +43,16 @@ export WORKING_DIR=$(pwd)
 
 ### Generate Dataset (Optional)
 
+The below commands generate the dataset. This step is optional if you download the pre-generated data from the link above.
+
+```
+cd ${WORKING_DIR}/synthetic
+```
+
+```
+python scripts/data/generate_dataset.py --dataset_folder data
+```
+
 ### Train LMs (Optional)
 
 In the paper we considered two different data settings: with section titles (W/ Title) and without section titles (W/O Title). We need to first process data according to these settings, using the script `scripts/data/process_data_for_LMs.py`. Note that this section can be skipped if you download the pretrained language models listed above.
