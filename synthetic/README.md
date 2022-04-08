@@ -1,6 +1,6 @@
 # Model Criticism for Text Generation
 
-Here we provide code to reproduce our results for "A Surprising Text Generation Failure". We provide all training data and training scripts, as well as all pretrained models used in our paper. Our code is built on top of [Transformers](https://github.com/huggingface/transformers/tree/de635af3f1ef740aa32f53a91473269c6435e19e), [fairseq](https://github.com/pytorch/fairseq), and [pytorch-struct](https://github.com/harvardnlp/pytorch-struct).
+Here we provide code to reproduce our results for "A Surprising Text Generation Failure". We provide all training data and training scripts, as well as all pretrained models used in our paper. Our code is built on top of [fairseq](https://github.com/pytorch/fairseq) and [pytorch-struct](https://github.com/harvardnlp/pytorch-struct).
 
 ## Instructions for Other Experiments
 
@@ -11,15 +11,16 @@ Instructions for "Critiquing Discourse Coherence" can be found at [../README.md]
 The code has been tested on Python 3.8. In addition, we need
 
 * [Pytorch](https://pytorch.org/get-started/locally/)
-* [Transformers](https://github.com/huggingface/transformers/tree/de635af3f1ef740aa32f53a9173269c6435e19e)
+* [fairseq](https://github.com/huggingface/transformers/tree/0e608fdba6cd27bb2aa917e369a0f49a2c55cb1e)
 * [pytorch-struct](https://github.com/harvardnlp/pytorch-struct)
 
-We use a particular version of Transformers:
+We use a particular version of fairseq:
 
 ```
-git clone https://github.com/huggingface/transformers.git
-cd transformers
-git checkout de635af3f1ef740aa32f53a91473269c6435e19e
+git clone https://github.com/pytorch/fairseq.git
+cd fairseq
+export FAIRSEQ_DIR=$(pwd)
+git checkout 0e608fdba6cd27bb2aa917e369a0f49a2c55cb1e
 pip install --editable .
 ```
 
@@ -53,133 +54,69 @@ cd ${WORKING_DIR}/synthetic
 python scripts/data/generate_dataset.py --dataset_folder data
 ```
 
+The generated word-level data is stored in `data/train.x`, `data/val.x`, and `data/test.x`. Note that due to PyTorch's [reproducibility issues](https://pytorch.org/docs/stable/notes/randomness.html), the generated dataset might vary very slightly across different PyTorch versions. The data we use is generated with PyTorch 1.4.0.
+
 ### Train LMs (Optional)
 
-In the paper we considered two different data settings: with section titles (W/ Title) and without section titles (W/O Title). We need to first process data according to these settings, using the script `scripts/data/process_data_for_LMs.py`. Note that this section can be skipped if you download the pretrained language models listed above.
+#### Train Transformer LM (Optional)
+
+We use `fairseq` for training a transformer language model on this dataset. Note that this section can be skipped if you download the pretrained transformer language model listed above.
 
 ```
-python scripts/data/process_data_for_LMs.py --dataset_folder data/PubMed/
+cd ${FAIRSEQ_DIR}
 ```
 
-Next, we use huggingface's Transformers library for training (finetuning) language models. In particular, we use the training script `examples/legacy/run_language_modeling.py`:
+First, we need to process data into binary format.
 
 ```
-cd transformers/examples/legacy
+fairseq-preprocess \
+    --only-source \
+    --trainpref ${WORKING_DIR}/synthetic/data/train.x \
+    --validpref ${WORKING_DIR}/synthetic/data/val.x \
+    --testpref ${WORKING_DIR}/synthetic/data/test.x \
+    --destdir ${WORKING_DIR}/synthetic/data/data-bin \
+    --workers 20 \
+    --padding-factor 1
 ```
 
-We will use the dataset PubMed to illustrate training (the commands for other datasets are the same). To train a GPT-2-based language model, we use the below command:
-
 ```
-export TRAIN_FILE=${WORKING_DIR}/data/PubMed/train.w_title.txt
-export TEST_FILE=${WORKING_DIR}/data/PubMed/val.w_title.txt
-export B=8
-export A=1
-export epochs=30
-export model=gpt2
-python run_language_modeling.py \
-       --per_device_train_batch_size=${B} \
-       --gradient_accumulation_steps=${A} \
-       --output_dir=${WORKING_DIR}/language_model_checkpoints/PubMed/GPT-2 \
-       --model_type=$model \
-       --model_name_or_path=$model \
-       --do_train \
-       --do_eval \
-       --train_data_file=$TRAIN_FILE \
-       --eval_data_file=$TEST_FILE --overwrite_output_dir --save_total_limit=5 \
-       --learning_rate=5e-5 --num_train_epochs=${epochs} --load_best_model_at_end=True \
-       --evaluation_strategy=epoch --save_strategy=epoch > ${WORKING_DIR}/log.pubmed.trainLM.w_title.gpt2 2>&1&
+fairseq-train --task language_modeling \
+  ${WORKING_DIR}/synthetic/data/data-bin \
+  --save-dir ${WORKING_DIR}/synthetic/language_model_checkpoints/transformer \
+  --arch transformer_lm --share-decoder-input-output-embed \
+  --dropout 0.3 \
+  --optimizer adam --adam-betas '(0.9, 0.98)' --weight-decay 0.0001 --clip-norm 0.0 \
+  --lr 0.0005 --lr-scheduler inverse_sqrt --warmup-updates 4000 --warmup-init-lr 1e-07 \
+  --tokens-per-sample 4098 --sample-break-mode eos \
+  --max-tokens 4096 \
+  --max-update 120000 --no-epoch-checkpoints --seed 1234
 ```
 
-Note that above we only showed the training commands for the W/ Title setting. We use the same settings for the W/O Title setting except for the training and validation files.
+#### Train HSMM LM (Optional)
 
-To train a GPT-Neo-based language model, we use the below command:
-
-```
-export TRAIN_FILE=${WORKING_DIR}/data/PubMed/train.w_title.txt
-export TEST_FILE=${WORKING_DIR}/data/PubMed/val.w_title.txt
-export B=4
-export A=2
-export epochs=30
-export model=EleutherAI/gpt-neo-125M
-python run_language_modeling.py \
-       --per_device_train_batch_size=${B} \
-       --gradient_accumulation_steps=${A} \
-       --output_dir=${WORKING_DIR}/language_model_checkpoints/PubMed/GPT-Neo \
-       --model_type=$model \
-       --model_name_or_path=$model \
-       --do_train \
-       --do_eval \
-       --train_data_file=$TRAIN_FILE \
-       --eval_data_file=$TEST_FILE --overwrite_output_dir --save_total_limit=5 \
-       --learning_rate=5e-5 --num_train_epochs=${epochs} --load_best_model_at_end=True \
-       --evaluation_strategy=epoch --save_strategy=epoch > ${WORKING_DIR}/log.pubmed.trainLM.w_title.gptneo 2>&1&
-
-```
-
-Training takes a few hours to a day on a single Nvidia A100 GPU, depending on the dataset.
 
 ### Generate from LMs
 
-```
-cd $WORKING_DIR
-```
-
-To generate from a trained language model, for the W/ Title setting:
+#### Generate from Transformer LM
 
 ```
- python scripts/generate/sample_LM.py \
-        --language_model_checkpoint language_model_checkpoints/PubMed/GPT-2/With_Title \
-        --output_file generation.pubmed.w_title.gpt2.json \
-        --with_title \
-        --num_samples 100
+cd ${FAIRSEQ_DIR}
 ```
 
-For the W/O Title setting:
+To generate from a trained language model,
 
 ```
- python scripts/generate/sample_LM.py \
-        --language_model_checkpoint language_model_checkpoints/PubMed/GPT-2/Without_Title \
-        --output_file generation.pubmed.wo_title.gpt2.json \
-        --num_samples 100
+fairseq-generate ${WORKING_DIR}/synthetic/data/data-bin \
+    --path ${WORKING_DIR}/synthetic/language_model_checkpoints/transformer/checkpoint_best.pt \
+    --batch-size 128  --max-len-a 0 --max-len-b 4096 --sampling --beam 1 --nbest 1 --sample-break-mode eos \
+    --task language_modeling | tee log.generate
 ```
 
-Note that in the paper we used 10k samples, which requires setting `--num_samples` to 10000 (it takes much longer to generate 10k samples so we used 100 in the above example commands).
-
-
-### Train Posterior Inferencers (Optional)
-
-We use huggingface transformer's script `examples/pytorch/text-classification/run_glue.py` to train a posterior inferencer. First, we need to prepare data according to its expected format, using the script `scripts/data/process_data_for_posterior_inferencers.py`. Note that this section can be skipped if you download the pretrained posterior inferencers listed in the beginning of this document.
-
-```
-python scripts/data/process_data_for_posterior_inferencers.py --dataset_folder data/PubMed/
-```
-
-Next, we can train a posterior inferencer (starting from the root directory of huggingface's Transformers):
-
-```
-cd examples/pytorch/text-classification
-```
-
-```
-python run_glue.py \
-    --model_name_or_path=bert-base-cased \
-    --do_train \
-    --do_eval \
-    --train_file=${WORKING_DIR}/data/PubMed/train.posterior_inferencer.json \
-    --validation_file=${WORKING_DIR}/data/PubMed/val.posterior_inferencer.json \
-    --max_seq_length=512 \
-    --per_gpu_train_batch_size=32 \
-    --learning_rate=2e-5 \
-    --num_train_epochs=3.0 \
-    --output_dir=${WORKING_DIR}/posterior_inferencer_checkpoints/PubMed \
-    --save_total_limit=5 \
-    --overwrite_output_dir > ${WORKING_DIR}/log.pubmed.trainPosteriorInferencer 2>&1&
-```
-
+#### Generate from HSMM LM
 
 ### Posterior Inference
 
-The goal of posterior inference is to infer the section titles z conditioned on section text x. We use a BERT-based classifier and use the MAP value of z instead of maintaining a full distribution over z:
+The goal of posterior inference is to infer the latent states z conditioned on observed x. By design the posterior distribution is a delta distribution so we can find a deterministic mapping from x to z.
 
 ```
 python scripts/posterior_inference/infer_section_titles.py \
@@ -205,8 +142,3 @@ python scripts/criticize/criticize.py \
 ```
 
 The output will contain the latent PPL for the LM generations.
-
-
-## Acknowledgements
-
-The datasets PubMed and ArXiv are adapted from [Cohan et. al. 2018](https://aclanthology.org/N18-2097/). Wiki is processed based on the English Wikipedia [dumped on Dec 1, 2021](https://dumps.wikimedia.org/enwiki/20211201/).

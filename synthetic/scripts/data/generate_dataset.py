@@ -22,6 +22,8 @@ parser.add_argument('--num_batches', type=int, default=1000,
                     help='The total number of batches to generate.')
 parser.add_argument('--train_split_ratio', type=float, default=0.8,
                     help='The ratio of training examples.')
+parser.add_argument('--val_split_ratio', type=float, default=0.1,
+                    help='The ratio of test examples.')
 parser.add_argument('--test_split_ratio', type=float, default=0.1,
                     help='The ratio of test examples.')
 parser.add_argument('--subseq_min_len', type=int, default=4,
@@ -48,8 +50,9 @@ def main(args):
     batch_size = args.batch_size
     num_batches = args.num_batches
     train_split_ratio = args.train_split_ratio
+    val_split_ratio = args.val_split_ratio
     test_split_ratio = args.test_split_ratio
-    val_split_ratio = 1 - train_split_ratio - test_split_ratio
+    assert train_split_ratio + val_split_ratio + test_split_ratio == 1
     subseq_min_len = args.subseq_min_len
     subseq_max_len = args.subseq_max_len
     subseq_vocab_size = args.subseq_vocab_size
@@ -100,7 +103,6 @@ def main(args):
     cluster2id = cluster2id.gt(0)
 
     # Initialize transition matrix
-    import pdb; pdb.set_trace()
     transition_matrix = torch.randn(Z, Z) / transition_temperature
     transition_matrix = transition_matrix.softmax(dim=-1)
 
@@ -137,10 +139,10 @@ def main(args):
         words = torch.zeros(M, batch_size).long()
         for t in range(M):
             probs = transition_matrix.gather(0, state.view(-1, 1).expand(-1, Z)) # batch_size, Z
-            state = torch.multinomial(probs, 1).view(batch_size) # batch_size
+            state = torch.distributions.categorical.Categorical(probs).sample().view(batch_size) # batch_size
             states[t] = state
             emission_probs = emission_matrix.gather(0, state.view(-1, 1).expand(-1, subseq_vocab_size)) # batch_size, subseq_vocab_size
-            word = torch.multinomial(emission_probs, 1).view(batch_size)
+            word = torch.distributions.categorical.Categorical(emission_probs).sample().view(batch_size)
             words[t] = word
         for state, word in zip(states.T, words.T):
             data.append((state, word))
