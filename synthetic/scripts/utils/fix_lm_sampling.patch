@@ -1,0 +1,19 @@
+diff --git a/fairseq/tasks/language_modeling.py b/fairseq/tasks/language_modeling.py
+index 14fe195..74b32cb 100644
+--- a/fairseq/tasks/language_modeling.py
++++ b/fairseq/tasks/language_modeling.py
+@@ -245,10 +245,10 @@ class LanguageModelingTask(FairseqTask):
+ 
+             # SequenceGenerator doesn't use src_tokens directly, we need to
+             # pass the `prefix_tokens` argument instead
+-            if prefix_tokens is None and sample["net_input"]["src_tokens"].nelement():
+-                prefix_tokens = sample["net_input"]["src_tokens"]
+-                if prefix_tokens[:, 0].eq(bos_token).all():
+-                    prefix_tokens = prefix_tokens[:, 1:]
++            ###if prefix_tokens is None and sample["net_input"]["src_tokens"].nelement():
++            ###    prefix_tokens = sample["net_input"]["src_tokens"]
++            ###    if prefix_tokens[:, 0].eq(bos_token).all():
++            ###        prefix_tokens = prefix_tokens[:, 1:]
+ 
+             return generator.generate(
+                 models, sample, prefix_tokens=prefix_tokens, bos_token=bos_token,

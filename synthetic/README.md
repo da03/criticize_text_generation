@@ -14,13 +14,14 @@ The code has been tested on Python 3.8. In addition, we need
 * [fairseq](https://github.com/huggingface/transformers/tree/0e608fdba6cd27bb2aa917e369a0f49a2c55cb1e)
 * [pytorch-struct](https://github.com/harvardnlp/pytorch-struct)
 
-We use a particular version of fairseq:
+We use a particular version of fairseq and apply a patch:
 
 ```
 git clone https://github.com/pytorch/fairseq.git
 cd fairseq
 export FAIRSEQ_DIR=$(pwd)
 git checkout 0e608fdba6cd27bb2aa917e369a0f49a2c55cb1e
+git apply /path/to/current_repo/synthetic/scripts/utils/fix_lm_sampling.patch
 pip install --editable .
 ```
 
@@ -114,7 +115,7 @@ fairseq-generate ${WORKING_DIR}/synthetic/data/data-bin \
 
 ```
 cd ${WORKING_DIR}/synthetic
-grep ^T log.generate.transformer | cut -f2- > generation.transformer.txt
+grep ^H log.generate.transformer | cut -f3- > generation.transformer.txt
 ```
 
 #### Generate from HSMM LM
@@ -136,9 +137,10 @@ python scripts/posterior_inference/infer_z.py \
 Now we are ready to criticize in the latent space.
 
 ```
+cd ${WORKING_DIR}/synthetic
 python scripts/criticize/criticize.py \
-       --criticizer criticizer/PubMed/ \
-       --input_file predicted_z.generation.pubmed.w_title.gpt2.json
+       --dataset_folder data/ \
+       --input_file_z predicted_z.generation.transformer.txt
 ```
 
-The output will contain the latent PPL for the LM generations.
+The output will contain the latent PPL for both real data and LM generations.
