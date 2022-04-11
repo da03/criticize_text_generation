@@ -109,7 +109,12 @@ To generate from a trained language model,
 fairseq-generate ${WORKING_DIR}/synthetic/data/data-bin \
     --path ${WORKING_DIR}/synthetic/language_model_checkpoints/transformer/checkpoint_best.pt \
     --batch-size 128  --max-len-a 0 --max-len-b 4096 --sampling --beam 1 --nbest 1 --sample-break-mode eos \
-    --task language_modeling | tee log.generate
+    --task language_modeling | tee ${WORKING_DIR}/synthetic/log.generate.transformer
+```
+
+```
+cd ${WORKING_DIR}/synthetic
+grep ^T log.generate.transformer | cut -f2- > generation.transformer.txt
 ```
 
 #### Generate from HSMM LM
@@ -119,21 +124,16 @@ fairseq-generate ${WORKING_DIR}/synthetic/data/data-bin \
 The goal of posterior inference is to infer the latent states z conditioned on observed x. By design the posterior distribution is a delta distribution so we can find a deterministic mapping from x to z.
 
 ```
-python scripts/posterior_inference/infer_section_titles.py \
-       --posterior_inferencer_checkpoint posterior_inferencer_checkpoints/PubMed \
-       --input_file generation.pubmed.w_title.gpt2.json \
-       --output_file predicted_z.generation.pubmed.w_title.gpt2.json
+cd ${WORKING_DIR}/synthetic
+python scripts/posterior_inference/infer_z.py \
+       --dataset_folder data \
+       --input_file generation.transformer.txt \
+       --output_file predicted_z.generation.transformer.txt
 ```
 
 ### Model Criticism in Latent Space
 
-Now we are ready to criticize in the latent space. First, we need to fit the criticizer distribution $P_c(z)$:
-
-```
-python scripts/criticize/fit_criticizer.py --dataset_folder data/PubMed/ --output_folder criticizer/PubMed/
-```
-
-Next, we evaluate LM generations:
+Now we are ready to criticize in the latent space.
 
 ```
 python scripts/criticize/criticize.py \

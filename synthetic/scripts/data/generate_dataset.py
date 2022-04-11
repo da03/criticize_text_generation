@@ -40,6 +40,8 @@ parser.add_argument('--initial_state', type=int, default=0,
                     help='The initial (auxiliary) state z_0. We only use it for sampling z_1 based on the transition matrix, but not for generating words.')
 parser.add_argument('--seed', type=int, default=1234,
                     help='Random seed.')
+parser.add_argument('--delimiter', type=str, default='<space>',
+                    help='Delimiter to mark the boundaries of subsequences.')
 args = parser.parse_args()
 
 
@@ -69,31 +71,32 @@ def main(args):
     torch.manual_seed(args.seed)
 
     # Build vocabulary (of words)
-    # Vocabulary is 'a' to 'z', 'A' to 'Z', and '<space>'
-    itos = ['<space>']
-    stoi = {'<space>': 0}
+    # Vocabulary is 'a' to 'z', 'A' to 'Z', and delimiter
+    delimiter = args.delimiter
+    itos = [delimiter]
+    stoi = {delimiter: 0}
     letters = string.ascii_letters
     for c in letters:
         itos.append(c)
         stoi[c] = len(stoi)
 
     # Build vocabulary (of subseqs)
-    valid_subseqs = []
-    valid_subseqs_set = set([])
+    subseq_vocab = []
+    subseq_vocab_set = set([])
     for word in range(subseq_vocab_size):
         while True:
             # First, sample length from uniform(subseq_min_len, subseq_max_len)
             l = random.choice(list(range(subseq_min_len, subseq_max_len+1)))
-            # Subtract 1 since the last token of each subseq is always <space>
+            # Subtract 1 since the last token of each subseq is always delimiter
             l -= 1
-            s = ' '.join(random.choice(letters) for i in range(l)) + ' <space>'
-            if s not in valid_subseqs_set:
+            s = ' '.join(random.choice(letters) for i in range(l)) + ' ' + delimiter
+            if s not in subseq_vocab_set:
                 break
-        valid_subseqs_set.add(s)
-        valid_subseqs.append(s)
+        subseq_vocab_set.add(s)
+        subseq_vocab.append(s)
     # Write vocabulary of subseqs to disk
-    with open(f'{dataset_folder}/valid_subseqs.txt', 'w') as fout:
-        for s in valid_subseqs:
+    with open(f'{dataset_folder}/subseq_vocab.txt', 'w') as fout:
+        for s in subseq_vocab:
             fout.write(f'{s}\n')
 
     # For each sub-sequence select a random unique latent state
@@ -115,7 +118,7 @@ def main(args):
     # Write transition and emission to disk
     torch.save(transition_matrix, f'{dataset_folder}/transitions.pt')
     torch.save(emission_matrix, f'{dataset_folder}/emissions.pt')
-    with open(f'{dataset_folder}/id2cluster.txt', 'w') as fout:
+    with open(f'{dataset_folder}/subseqid_to_z.txt', 'w') as fout:
         for item in id2cluster.view(-1).tolist():
             fout.write(f'{item}\n')
 
@@ -162,7 +165,7 @@ def main(args):
             total_NLL += -transition_matrix[s1, s2].log().item()
         for s, w in zip(state, word):
             total_NLL += -emission_matrix[s,w].log().item()
-            total_words += len(valid_subseqs[w].strip().split())
+            total_words += len(subseq_vocab[w].strip().split())
         PPL = math.exp(total_NLL / total_words)
     print (f'PPL of the true generative process: {PPL}')
 
@@ -172,7 +175,7 @@ def main(args):
             with open(f'{dataset_folder}/{split}.x', 'w') as fx:
                 for state, word in data:
                     fz.write(' '.join([str(item) for item in state.tolist()]) + '\n')
-                    fx.write(' '.join([valid_subseqs[item] for item in word.tolist()]) + '\n')
+                    fx.write(' '.join([subseq_vocab[item] for item in word.tolist()]) + '\n')
     write_data(train_data, 'train')
     write_data(val_data, 'val')
     write_data(test_data, 'test')

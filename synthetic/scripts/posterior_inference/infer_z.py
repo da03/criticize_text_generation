@@ -1,112 +1,90 @@
-import sys
 import os
+import random
+import string
 import math
-import torch
-from argparse import ArgumentParser
+import json
+import argparse
+import collections
+import tqdm
 
-parser = ArgumentParser()
-parser.add_argument("--sample_file", type=str, required=True)
-parser.add_argument("--word2letters_file", type=str, required=True)
-parser.add_argument("--id2clusters_file", type=str, required=True)
-parser.add_argument("--transition_file", type=str, required=True)
-parser.add_argument("--emission_file", type=str, required=True)
-parser.add_argument("--initial_state", type=int, default=0)
-#parser.add_argument("--unk_x", type=int, default=0)
-parser.add_argument("--unk_word", type=int, default=0)
-parser.add_argument("--max_words", type=int, default=100)
-#parser.add_argument("--unk_x_emission_prob", type=float, default=1e-4)
+import torch
+
+parser = argparse.ArgumentParser(description='Infer latent states z from x. The mapping is deterministic.')
+parser.add_argument('--dataset_folder', type=str, required=True,
+                    help='Data folder containing subseq_vocab.txt and subseqid_to_z.txt which are necessary for posterior inference.')
+parser.add_argument('--input_file', type=str, required=True,
+                    help='Input filename. Each line should be a generated sequence.')
+parser.add_argument('--output_file', type=str, required=True,
+                    help='Output filename. Each line should be a predicted sequence of z\'s.')
+parser.add_argument('--delimiter', type=str, default='<space>',
+                    help='Delimiter to mark the boundaries of subsequences.')
+args = parser.parse_args()
+
+
+def load_subseq_vocabulary(filename):
+    stoi = {}
+    with open(filename) as fin:
+        for line in fin:
+            subseq = line.strip()
+            stoi[subseq] = len(stoi)
+    return stoi
+
+
+def load_subseqid_to_z(filename):
+    itoi = []
+    with open(filename) as fin:
+        for line in fin:
+            z = int(line.strip())
+            itoi.append(z)
+    return itoi
+
+def find_M(filename):
+    with open(filename) as fin:
+        line = fin.readline()
+        return len(line.strip().split())
 
 def main(args):
-    ignored = 0
-    ignored_not = 0
-    total_words = 0
-    warning_words = 0
-    word2letters = []
-    letters2word = {}
-    #import pdb; pdb.set_trace()
-    with open(args.word2letters_file) as fin:
-        for idx, line in enumerate(fin):
-            word = line.strip().replace(' ', '').replace('<space>', '')
-            word2letters.append(word)
-            letters2word[word] = idx
-    unk_word = word2letters[args.unk_word]
+    dataset_folder = args.dataset_folder
 
-    #import pdb; pdb.set_trace()
-    transitions = torch.load(args.transition_file)
-    emissions = torch.load(args.emission_file)
+    # Load the vocabulary of subsequences
+    subseq_vocab_filename = os.path.join(dataset_folder, 'subseq_vocab.txt')
+    subseq_stoi = load_subseq_vocabulary(subseq_vocab_filename)
 
-    id2clusters = []
-    with open(args.id2clusters_file) as fin:
-        for line in fin:
-            id2clusters.append(int(line.strip()))
+    # Load the mapping from subsequence id to z
+    subseqid_to_z_filename = os.path.join(dataset_folder, 'subseqid_to_z.txt')
+    subseqid_to_z = load_subseqid_to_z(subseqid_to_z_filename)
 
-    with open(args.sample_file) as fin:
-        logprob_z_total = 0.
-        logprob_x_given_z_total = 0.
-        normalizer_z = 0
-        normalizer_x = 0
-        for line in fin:
-            #normalizer_x += len(line.strip().split())
-            initial_state = args.initial_state
-            line = line.strip().replace(' ', '')
-            words = line.split('<space>')
-            words = [item for item in words if item != '']
-            #xs = []
-            #zs = []
-            z = args.initial_state
-            #normalizer_z += len(words)
-            #import pdb; pdb.set_trace()
-            logprob_z_total_example = 0.
-            logprob_x_given_z_total_example = 0.
-            normalizer_z_example = 0.
-            normalizer_x_example = 0.
-            warning = False
-            iiii = 0
-            for word in words:
-                iiii += 1
-                if iiii > args.max_words:
-                    break
-                #import pdb; pdb.set_trace()
-                if word not in letters2word:
-                    #import pdb; pdb.set_trace()
-                    word = unk_word
-                    warning_words += 1
-                    warning = True
-                    print ('WARNING')
-                total_words += 1
-                x = letters2word[word]
-                new_z = id2clusters[x]
-                #import pdb; pdb.set_trace()
-                #import random
-                #new_z = random.choice(list(range(256)))
-                logprob_z = transitions[z][new_z].log()
-                z = new_z
-                logprob_x_given_z = emissions[z][x].log()
-                if word != unk_word:
-                  normalizer_z += 1
-                  normalizer_x += (1 + len(word))
-                  logprob_z_total += logprob_z
-                  logprob_x_given_z_total += logprob_x_given_z
-                  normalizer_z_example += 1
-                  normalizer_x_example += (1 + len(word))
-                  logprob_z_total_example += logprob_z
-                  logprob_x_given_z_total_example += logprob_x_given_z
-                #else:
-                #  normalizer_z -= 1
-                #  normalizer_x -= (1+len(word))
-                #xs.append(x)
-                #zs.append(z)
-            ignored_not += 1
-            if warning:
-              ignored += 1
-              normalizer_z -= normalizer_z_example
-              normalizer_x -= normalizer_x_example
-              logprob_z_total -= logprob_z_total_example
-              logprob_x_given_z_total -= logprob_x_given_z_total_example
-        print (f'warning ratio: {warning_words/total_words}')
-        print (f'z PPL: {math.exp(-logprob_z_total / normalizer_z)}, x given z PPL: {math.exp(-logprob_x_given_z_total / normalizer_x)}, x shortest given z PPL:  {math.exp(-logprob_x_given_z_total / normalizer_z)}, flat PPL: {math.exp(-(logprob_z_total+logprob_x_given_z_total) / normalizer_x)}, flat shortest PPL: {math.exp(-(logprob_z_total+logprob_x_given_z_total) / normalizer_z)}')
-        print (ignored/ignored_not)
+    # Find the ground truth number of states M
+    train_z_filename = os.path.join(dataset_folder, 'train.z')
+    M = find_M(train_z_filename)
+
+    # Perform posterior inference
+    invalid = 0
+    total = 0
+    with open(args.input_file) as fin:
+        with open(args.output_file, 'w') as fout:
+            for line in fin:
+                subseqs = line.strip().split(args.delimiter)
+                zs = []
+                flag_invalid = False
+                for subseq in subseqs[:-1]:
+                    subseq = subseq.strip() + ' ' + args.delimiter
+                    if subseq not in subseq_stoi:
+                        flag_invalid = True
+                        break
+                    subseq_id = subseq_stoi[subseq]
+                    z = subseqid_to_z[subseq_id]
+                    zs.append(z)
+                if len(zs) != M:
+                    flag_invalid = True
+                    continue
+                if flag_invalid:
+                    invalid += 1
+                total += 1
+                fout.write(' '.join([str(z) for z in zs]) + '\n')
+
+    print (f'{total} sequences processed. {invalid} invalid.')
+   
 
 if __name__ == '__main__':
-    args = parser.parse_args()
     main(args)
