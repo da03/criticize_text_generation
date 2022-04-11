@@ -104,7 +104,7 @@ fairseq-train --task language_modeling \
 cd ${FAIRSEQ_DIR}
 ```
 
-To generate from a trained language model,
+To generate from a trained language model, we use `fairseq-generate` (don't forget to apply the patch in the installation part since otherwise fairseq would simply copy the original sentences):
 
 ```
 fairseq-generate ${WORKING_DIR}/synthetic/data/data-bin \
