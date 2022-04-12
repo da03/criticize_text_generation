@@ -1,29 +1,11 @@
-import math
-import warnings
-import copy
 import os
+import re
 
 import torch
-import torch.nn as nn
 import torchtext.legacy as tt
-import matplotlib.pyplot as plt
-
-from tqdm import tqdm
-
-from torch.nn.utils.rnn import pack_padded_sequence as pack
-from torch.nn.utils.rnn import pad_packed_sequence as unpack
 
 
-NGRAMS_MIN = 1
-NGRAMS_MAX = 11
-
-data_folder = 'hsmm_data'
-BATCH_SIZE = 4     # batch size for training and validation
-BATCH_SIZE = 8     # batch size for training and validation
-print (data_folder)
-
-
-class CatDataset(tt.data.Dataset):
+class HSMMDataset(tt.data.Dataset):
   @staticmethod
   def sort_key(ex):
     return len(ex.text)
@@ -34,17 +16,21 @@ class CatDataset(tt.data.Dataset):
     
     examples = []
     # Get text
-    with open(path+'.x', 'r') as f:
-        for line in f:
+    with open(path+'.x') as fin:
+        for line in fin:
             ex = tt.data.Example()
             ex.text = text_field.preprocess(line.strip()) 
             examples.append(ex)
     
     # Get ngram ids
-    for ngram, ngram_field in ngram_fields:
-        with open(path+f'_{ngram}.x', 'r') as f:
-            for i, line in enumerate(f):
-                setattr(examples[i], f'{ngram}', ngram_field.preprocess(line.strip()))
+    for ngram_field_name, ngram_field in ngram_fields:
+        m = re.match(r'(\d+)_gram', ngram_field_name)
+        n = int(m.group(1))
+        ngram_filename = path + f'.{n}-gram'
+        assert os.path.exists(ngram_filename)
+        with open(ngram_filename) as fin:
+            for i, line in enumerate(fin):
+                setattr(examples[i], ngram_field_name, ngram_field.preprocess(line.strip()))
             
     super().__init__(examples, fields, **kwargs)
   
@@ -61,81 +47,67 @@ class CatDataset(tt.data.Dataset):
     return tuple(d for d in (train_data, val_data, test_data)
                    if d is not None)
 
-#V = 10000
-#import pdb; pdb.set_trace()
-num_clusters = 256
-# GPU check, make sure to use GPU where available
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print (device)
 
-## Turn off annoying torchtext warnings about pending deprecations
-warnings.filterwarnings("ignore", module="torchtext", category=UserWarning)
-
-
-
-ngram_fields = []
-for ngram in range(NGRAMS_MIN, NGRAMS_MAX+1):
-    ngram_field = tt.data.Field(include_lengths=True,         # include lengths
-                        batch_first=False,            # batches will be max_len x batch_size
-                        tokenize=lambda x: [int(item) for item in x.split()], # use split to tokenize
-                        use_vocab=False,
-                        pad_token=0,
-                       ) 
-    ngram_fields.append((f'ngram{ngram}', ngram_field))
-
-#import pdb; pdb.set_trace()
-text_field = tt.data.Field(include_lengths=True,
-                    batch_first=False,            # batches will be max_len x batch_size
-                    tokenize=lambda x: [item for item in x.split()], # use split to tokenize
-                    )            # no <eos>
-
-# Make splits for data
-train_data, val_data, test_data= CatDataset.splits(
-    text_field, ngram_fields, path=data_folder,
-    train='train', validation='val', test='test')
-#import pdb; pdb.set_trace()
-
-# Build vocabulary
-#SRC.build_vocab(train_data.z)
-text_field.build_vocab(train_data.text)
-
-#print (f"Size of src vocab: {len(SRC.vocab)}")
-print (f"Size of tgt vocab: {len(text_field.vocab)}")
-#print (f"Index for src padding: {SRC.vocab.stoi[SRC.pad_token]}")
-pad_idx = text_field.vocab.stoi[text_field.pad_token]
-print (f"Index for tgt padding: {text_field.vocab.stoi[text_field.pad_token]}")
-#print (f"Index for start of sequence token: {TGT.vocab.stoi[TGT.init_token]}")
-#print (f"Index for end of sequence token: {TGT.vocab.stoi[TGT.eos_token]}")
+def load_subseq_vocabs(foldername):
+    filenames = glob.glob(os.path.join(foldername, 'subseq_vocab_*-gram.txt'))
+    vocabs = {}
+    for filename in filenames:
+        m = re.match(r'subseq_vocab_(\d+)-gram.txt', os.path.basename(filename))
+        if m:
+            n = int(m.group(1))
+            vocab = {}
+            with open(filename) as fin:
+                for line in fin:
+                    vocab[line.strip()] = len(vocab)
+            vocabs[n] = vocab
+    return vocabs
 
 
-print ('batch size', BATCH_SIZE)
-train_iter, val_iter, test_iter= tt.data.BucketIterator.splits((train_data, val_data, test_data),
-                                                     batch_size=BATCH_SIZE, 
-                                                     device=device,
-                                                     repeat=False, 
-                                                     sort_key=lambda x: len(x.text), # sort by length to minimize padding
-                                                     sort_within_batch=True,
-                                                     )
+def load_data(dataset_folder, vocab_folder, Z, batch_size, pad_token, unk_token):
+    # Load subseq vocabs
+    vocabs = load_subseq_vocabs(vocab_folder)
+    subseq_min_len = min(vocab.keys())
+    subseq_max_len = max(vocab.keys())
+    subseq_vocab_sizes = {n: len(vocabs[n]) for n in vocabs}
 
+    # Build fields
+    def tokenize(s):
+        return [int(item) for item in s.split()]
 
-#import pdb; pdb.set_trace()
-batch = next(iter(train_iter))
-src, src_lengths = batch.ngram4
-tgt, tgt_lengths = batch.text
-print (f"Size of src batch: {src.shape}")
-print (f"Third src sentence in batch: {src[:, 0]}")
-print (f"Length of the third src sentence in batch: {src_lengths[0]}")
-#print (f"Converted back to string: {' '.join([SRC.vocab.itos[i] for i in src[:, 2]])}")
-print (f"Converted back to string: {' '.join([text_field.vocab.itos[i] for i in tgt[:, 0]])}")
+    ngram_fields = []
+    for n in range(subseq_min_len, subseq_max_len+1):
+        vocab = vocabs[n]
+        ngram_field = tt.data.Field(include_lengths=True,
+                batch_first=True,
+                tokenize=tokenize,
+                use_vocab=False,
+                pad_token=vocab[pad_token],
+                )
+        ngram_fields.append((f'{n}_gram', ngram_field))
 
-print (src)
-print (tgt)
+    text_field = tt.data.Field(include_lengths=True,
+            batch_first=True,
+            tokenize=lambda x: x.split(),
+            )
 
-#vocab_size_x = V + 1
-#import pdb; pdb.set_trace()
-vocab_size_x = len(text_field.vocab)
-vocab_size_z = num_clusters + 1
-vocab_size_ngrams = {}
-for ngram in range(NGRAMS_MIN, NGRAMS_MAX+1):
-    filename = os.path.join(data_folder, f'id2letters_{ngram}.txt')
-    vocab_size_ngrams[ngram] = len(open(filename).readlines()) + 2
+    # Build dataset splits
+    train_data, val_data, test_data = HSMMDataset.splits(
+            text_field, ngram_fields, path=dataset_folder,
+            train='train', validation='val', test='test')
+
+    # Build vocabulary for text field
+    text_field.build_vocabulary(train_data.text)
+
+    x_vocab_size = len(text_field.vocab)
+    print (f"Size of text vocab: {x_vocab_size}")
+
+    # Create data iterators
+    train_iter, val_iter, test_iter= tt.data.BucketIterator.splits((train_data, val_data, test_data),
+            batch_size=BATCH_SIZE, 
+            device=torch.device('cuda'),
+            repeat=False, 
+            sort_key=lambda x: len(x.text),
+            sort_within_batch=True,
+            )
+
+    return train_iter, val_iter, test_iter, subseq_vocab_sizes, x_vocab_size

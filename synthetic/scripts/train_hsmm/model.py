@@ -8,7 +8,7 @@ NEG_INF = -1e6
 
 class HSMMModel(nn.Module):
 
-    def __init__(self, device, vocab_size_ngrams, vocab_size_z, vocab_size_x, max_length_z=11, min_length_z=1, pad_idx=None, train_z=True, train_l=True):
+    def __init__(self, device, vocab_size_ngrams, vocab_size_z, max_length_z=11, min_length_z=1, pad_idx=None, train_z=True, train_l=True):
         super().__init__()
         self.mods = {}
         self.device = device
@@ -43,7 +43,6 @@ class HSMMModel(nn.Module):
         self.min_length_z = min_length_z
         self.max_length_z = max_length_z
         self.vocab_size_z = vocab_size_z
-        self.vocab_size_x = vocab_size_x
         self.vocab_size_ngrams = vocab_size_ngrams
         self.init_state = 0
         assert pad_idx is not None
