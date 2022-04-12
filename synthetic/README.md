@@ -119,6 +119,29 @@ Now we are ready to train the HSMM. HSMM training consists of two phases: in the
 
 For the first training phase:
 
+```
+python scripts/train_hsmm/train.py \
+    --dataset_folder data \
+    --checkpoint_folder language_model_checkpoints/hsmm \
+    --Z 800 \
+    --fix_z_transitions \
+    --fix_n_emissions \
+    --epochs 1 \
+    --lr 1e-1 > log.train.HSMM.phase1 2>&1&
+```
+
+For the second training phase:
+
+```
+python scripts/train/train.py \
+    --dataset_folder data \
+    --checkpoint_folder language_model_checkpoints/hsmm \
+    --M 800 \
+    -epochs 10 \
+    --lr 3e-1 \
+    --train_from language_model_checkpoints/hsmm/best.pt > log.train.HSMM.phase2 2>&1&
+```
+
 ### Generate from LMs
 
 #### Generate from Transformer LM
