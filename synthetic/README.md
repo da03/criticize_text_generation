@@ -95,6 +95,29 @@ fairseq-train --task language_modeling \
 
 #### Train HSMM LM (Optional)
 
+This section shows how to train an HSMM language model. Note that this section is optional if you download the pretrained HSMM language model from above.
+
+The HSMM language model is parameterized by three matrices: a transition matrix that specifies the transition probability from a previous state to the next state; a length emission matrix that specifies the distribution over the number of tokens in the subsequence to generate given a state; an emission matrix that specifies the distribution over the subsequence of tokens given a state and the number of tokens in the subsequence. Note that to parameterize the emission matrix, we cannot use the subsequence vocabulary since that would be cheating. Instead, we take the most common 250k n-grams in the training dataset and use them as the possible subsequences to emit:
+
+```
+python scripts/train_hsmm/build_subseq_vocab.py \
+    --dataset_folder data \
+    --output_folder language_model_checkpoints/hsmm \
+    --subseq_vocab_size 250000 \
+    --subseq_min_len 1 --subseq_max_len 11
+```
+
+We'll use the generated subsequence vocabulary to convert ngrams in the training datasets into subsequence ids:
+
+```
+python scripts/train_hsmm/convert_data_to_subseq_ids.py \
+    --dataset_folder data \
+    --vocab_folder language_model_checkpoints/hsmm
+```
+
+Now we are ready to train the HSMM. HSMM training consists of two phases: in the first phase, we fix the transition matrix and the length emission matrix, and only learn the emission matrix. In the second phase, we train everything. The first training phase is necessary to avoid under-utilization of states.
+
+For the first training phase:
 
 ### Generate from LMs
 
