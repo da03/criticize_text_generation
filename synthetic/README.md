@@ -126,6 +126,7 @@ python scripts/train_hsmm/train.py \
     --Z 800 \
     --fix_z_transitions \
     --fix_n_emissions \
+    --batch_size 8 \
     --epochs 1 \
     --lr 1e-1 > log.train.HSMM.phase1 2>&1&
 ```
@@ -137,10 +138,14 @@ python scripts/train/train.py \
     --dataset_folder data \
     --checkpoint_folder language_model_checkpoints/hsmm \
     --M 800 \
-    -epochs 10 \
+    --batch_size 8 \
+    --epochs 10 \
     --lr 3e-1 \
     --train_from language_model_checkpoints/hsmm/best.pt > log.train.HSMM.phase2 2>&1&
 ```
+
+Note that due to the small batch size used (since the emission parameters consume a lot of memory. Besides, HSMM inference is memory-intensive), training is extremely slow and can take a week on a single Nvidia A100 GPU.
+
 
 ### Generate from LMs
 
@@ -177,6 +182,8 @@ python scripts/posterior_inference/infer_z.py \
        --input_file generation.transformer.txt \
        --output_file predicted_z.generation.transformer.txt
 ```
+
+#### Generate from HSMM LM
 
 ### Model Criticism in Latent Space
 
