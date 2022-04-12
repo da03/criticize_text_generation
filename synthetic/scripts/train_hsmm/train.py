@@ -14,26 +14,20 @@ parser.add_argument('--checkpoint_folder', type=str, default='language_model_che
                     help='Folder storing the trained models.')
 parser.add_argument('--Z', type=int, default=800,
                     help='The number of states.')
-parser.add_argument('--fix_z_transitions', action='store_true',
-                    help='Do not train the transition matrix.')
-parser.add_argument('--fix_n_emissions', action='store_true',
-                    help='Do not train the length emission matrix.')
+parser.add_argument('--batch_size', type=int, default=8,
+                    help='Batch size.')
 parser.add_argument('--epochs', type=int, default=10,
                     help='The number of states.')
 parser.add_argument('--lr', type=float, default=3e-1,
                     help='Learning rate.')
-parser.add_argument("--lr", type=float, default=1e-4)
-parser.add_argument("--print_every", type=int, default=30)
+parser.add_argument('--fix_z_transitions', action='store_true',
+                    help='Do not train the transition matrix.')
+parser.add_argument('--fix_n_emissions', action='store_true',
+                    help='Do not train the length emission matrix.')
+parser.add_argument("--log_every", type=int, default=30)
 parser.add_argument("--accumulate", type=int, default=1)
-parser.add_argument("--dropout", type=float, default=0)
 parser.add_argument("--train_from", type=str, default='')
 
-#vocab_size_z = 400
-#if vocab_size_z > 300:
-#  assert BATCH_SIZE == 1
-#else:
-#  assert BATCH_SIZE == 2
-assert BATCH_SIZE == 8
 def main(args):
   not_improving = 0
   best_ppl_sofar = float('inf')
@@ -41,7 +35,6 @@ def main(args):
   if vocab_size_z <= 400:
       assert BATCH_SIZE >= 32
   decay_lr = args.decay_lr == 1
-  init = args.init == 'xaiver'
   print ('init', init)
   print ('vocab_size_z', vocab_size_z)
   sys.stdout.flush()
@@ -99,7 +92,7 @@ def main(args):
         split_size = x_out.size(0) // 2
         print ('splitting')
 
-        logits = model(x_out[:split_size].contiguous(), x_lengths[:split_size].contiguous(), {k:ngram_ids[k][:split_size].contiguous() for k in ngram_ids}, dropout=args.dropout)
+        logits = model(x_out[:split_size].contiguous(), x_lengths[:split_size].contiguous(), {k:ngram_ids[k][:split_size].contiguous() for k in ngram_ids})
         loss = -logits.sum()
         total_loss += loss.item()
         loss.div(num_words*args.accumulate).backward()
