@@ -33,7 +33,7 @@ class HSMMModel(nn.Module):
         # Stores normalized emission matrices
         self.normalized_emission_matrices = {}
         # A shared padding that will be used during forward
-        self.pad_logits = self.length_emission_matrix_z_n.new(self.Z, self.subseq_min_len).cuda().fill_(NEG_INF)
+        self.pad_logits = self.length_emission_matrix_z_n.new(self.Z, self.subseq_min_len).fill_(NEG_INF).cuda()
 
     def initialize(self):
         for p in self.parameters():
@@ -79,7 +79,7 @@ class HSMMModel(nn.Module):
     @torch.no_grad()
     def sample(self, batch_size, M=50):
         self.eval()
-        for n in subseq_vocab_sizes:
+        for n in self.subseq_vocab_sizes:
             if n not in self.normalized_emission_matrices:
                 emission_matrix_subseq_z = getattr(self, f'emission_matrix_subseq_z_{n}gram')
                 emission_matrix_subseq_z.data[self.subseq_pad_id] = NEG_INF
@@ -87,20 +87,21 @@ class HSMMModel(nn.Module):
                 emission_matrix_subseq_z_normalized = emission_matrix_subseq_z.softmax(dim=0)
                 self.normalized_emission_matrices[n] = emission_matrix_subseq_z_normalized
 
-        transition_matrix_z_z_normalized = transition_matrix_z_z.softmax(dim=-1)
-        length_emission_matrix_z_n = torch.cat((self.pad_logits, self.length_emission_matrix_z_n), dim=-1)
+        transition_matrix_z_z_normalized = self.transition_matrix_z_z.softmax(dim=-1)
+        device = self.transition_matrix_z_z.device
+        length_emission_matrix_z_n = torch.cat((self.pad_logits.to(device), self.length_emission_matrix_z_n), dim=-1)
         length_emission_matrix_z_n_normalized = length_emission_matrix_z_n.softmax(dim=-1) # Z, max_len
 
 
         # Sample
-        initial_z = torch.new_zeros(batch_size).fill_(self.initial_state)
+        initial_z = torch.zeros(batch_size).long().fill_(self.initial_state)
         z = initial_z
         n_xs = [[] for _ in range(batch_size)]
         for m in range(M):
             probs = transition_matrix_z_z_normalized.gather(0, z.view(-1, 1).expand(-1, self.Z))
             z_sample = torch.distributions.categorical.Categorical(probs).sample().view(batch_size) # batch_size
             length_probs = length_emission_matrix_z_n_normalized.gather(0, z_sample.view(-1, 1).expand(-1, self.subseq_max_len))
-            l_sample = torch.distributions.categorical.Categorical(length_probs).sample().view(batch_size) # batch_size
+            length_sample = torch.distributions.categorical.Categorical(length_probs).sample().view(batch_size) # batch_size
             for i, (z, n) in enumerate(zip(z_sample, length_sample)):
                 z = z.item()
                 n = n.item()

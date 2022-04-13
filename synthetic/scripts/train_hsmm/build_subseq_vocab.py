@@ -59,7 +59,7 @@ def main(args):
     # Count the most common `subseq_vocab_size` ngrams for n in [subseq_min_len, subseq_max_len]
     ngrams = {}
     for n in tqdm.tqdm(range(subseq_min_len, subseq_max_len+1)):
-        ngrams[n] = count_ngrams(n, train_filename, topk=subseq_vocab_size)
+        ngrams[n] = count_ngrams(n, train_filename, topk=subseq_vocab_size-2) # minus 2 for pad and unk
 
     # Dump to disk
     os.makedirs(output_folder, exist_ok=True)

@@ -176,9 +176,9 @@ grep ^H log.generate.transformer | cut -f3- > generation.transformer.txt
 To generate from a trained HSMM language model:
 
 ```
-python scripts/train_HSMM/generate.py \
-    --checkpoint_path langauge_model_checkpoints/hsmm/best.pt \
-    --vocab_folder langauge_model_checkpoints/hsmm/ \
+python scripts/train_hsmm/generate.py \
+    --checkpoint_path language_model_checkpoints/hsmm/best.pt \
+    --vocab_folder language_model_checkpoints/hsmm/ \
     --num_samples 6400 \
     --output_file generation.HSMM.txt
 ```

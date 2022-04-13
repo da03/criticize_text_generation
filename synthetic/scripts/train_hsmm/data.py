@@ -50,18 +50,29 @@ class HSMMDataset(tt.data.Dataset):
                    if d is not None)
 
 
-def load_subseq_vocabs(foldername):
+def load_subseq_vocabs(foldername, get_itos=False):
     filenames = glob.glob(os.path.join(foldername, 'subseq_vocab_*-gram.txt'))
     vocabs = {}
+    if get_itos:
+        vocabs_itos = {}
     for filename in filenames:
         m = re.match(r'subseq_vocab_(\d+)-gram.txt', os.path.basename(filename))
         if m:
             n = int(m.group(1))
             vocab = {}
+            if get_itos:
+                vocab_itos = []
             with open(filename) as fin:
                 for line in fin:
-                    vocab[line.strip()] = len(vocab)
+                    subseq = line.strip()
+                    vocab[subseq] = len(vocab)
+                    if get_itos:
+                        vocab_itos.append(subseq)
+            if get_itos:
+                vocabs_itos[n] = vocab_itos
             vocabs[n] = vocab
+    if get_itos:
+        return vocabs, vocabs_itos
     return vocabs
 
 

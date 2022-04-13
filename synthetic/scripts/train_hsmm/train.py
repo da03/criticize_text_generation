@@ -79,7 +79,7 @@ def get_subseq_ids(batch, subseq_vocab_sizes):
 def main(args):
     dataset_folder = args.dataset_folder
     vocab_folder = args.vocab_folder
-    Z = args.Z + 1 # plus one for initial state
+    Z = args.Z
     batch_size = args.batch_size
     pad_token = args.pad_token
     unk_token = args.unk_token
