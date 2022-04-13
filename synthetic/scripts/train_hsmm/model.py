@@ -8,86 +8,42 @@ NEG_INF = -1e6
 
 class HSMMModel(nn.Module):
 
-    def __init__(self, device, vocab_size_ngrams, vocab_size_z, max_length_z=11, min_length_z=1, pad_idx=None, train_z=True, train_l=True):
+    def __init__(self, Z, x_vocab_size, subseq_vocab_sizes, initial_state=0):
         super().__init__()
-        self.mods = {}
-        self.device = device
-        z_probs_per_z = torch.randn(vocab_size_z, vocab_size_z)#.fill_(0)
-        l_probs_per_z = torch.randn(vocab_size_z, max_length_z-min_length_z+1)#.fill_(0)
+        self.Z = Z
+        self.initial_state = initial_state
+        # Find min_len and max_len
+        subseq_min_len = min(subseq_vocab_sizes.keys())
+        subseq_max_len = max(subseq_vocab_sizes.keys())
+        self.subseq_min_len = subseq_min_len
+        self.subseq_max_len = subseq_max_len
 
-        #self.z_per_z = nn.Parameter(z_probs_per_z.to(device))
-        #self.z_per_z = nn.Parameter(z_probs_per_z).to(device)
-        print (f'min length {min_length_z}')
-        if train_z:
-            print ('train z')
-            self.z_per_z = nn.Parameter(z_probs_per_z.to(device))
-            #self.l_per_z = nn.Parameter(l_probs_per_z.to(device))
-        else:
-            print ('not train z')
-            self.z_per_z = nn.Parameter(z_probs_per_z).to(device)
-            #self.l_per_z = nn.Parameter(l_probs_per_z).to(device)
-
-        if train_l:
-            print ('train l')
-            #self.z_per_z = nn.Parameter(z_probs_per_z.to(device))
-            self.l_per_z = nn.Parameter(l_probs_per_z.to(device))
-        else:
-            print ('not train l')
-            #self.z_per_z = nn.Parameter(z_probs_per_z).to(device)
-            self.l_per_z = nn.Parameter(l_probs_per_z).to(device)
-
-
-
-        #self.l_per_z = nn.Parameter(l_probs_per_z).to(device)
-
-        self.min_length_z = min_length_z
-        self.max_length_z = max_length_z
-        self.vocab_size_z = vocab_size_z
-        self.vocab_size_ngrams = vocab_size_ngrams
-        self.init_state = 0
-        assert pad_idx is not None
-        self.pad_idx = pad_idx
-
-        self.log_partitions = {}
-        for ngram in self.vocab_size_ngrams:
-            print (ngram)
-            vocab_size_ngram = vocab_size_ngrams[ngram]
-            if ngram >= 10:
-                MAX_SIZE = 500000
-            else:
-                MAX_SIZE = 100000
-            if vocab_size_z > 300:
-                MAX_SIZE = 400000
-            else:
-                MAX_SIZE = 500000
-            if vocab_size_z > 550:
-                MAX_SIZE = 300000
-            if vocab_size_z > 700:
-                MAX_SIZE = 250000
-            print ('max_size', MAX_SIZE)
-            vocab_size_ngram = min(vocab_size_ngram, MAX_SIZE)
-            mod = nn.Parameter(torch.zeros(vocab_size_ngram, vocab_size_z).cuda())#nn.Embedding(vocab_size_ngram, vocab_size_z, sparse=True)
-            #mod.data.uniform_(-0.02, 0.02)
-            setattr(self, f'emb{ngram}', mod)
-        #self.reset_partition()
+        # Create parameters
+        self.transition_matrix_z_z = nn.Parameter(torch.randn(Z, Z))
+        self.length_emission_matrix_z_n = nn.Parameter(torch.randn(Z, subseq_max_len-subseq_min_len+1))
+        # One emission matrix per subsequence length n
+        for n in subseq_vocab_sizes:
+            subseq_vocab_size = subseq_vocab_sizes[n]
+            emission_matrix_z_subseq = nn.Parameter(torch.zeros(z, subseq_vocab_size))
+            setattr(self, f'emission_matrix_z_{n}gram', emission_matrix_z_subseq)
         self.initialize()
 
     def initialize(self):
-        print ('init with Xavier')
         for p in self.parameters():
             if p.dim() > 1:
                 torch.nn.init.xavier_uniform_(p)
-        #for p in self.parameters():
-        #    p.data.uniform_(-0.15, 0.15)
 
-    def forward(self, x, x_lengths, ngram_ids):
-        #import pdb; pdb.set_trace()
-        #self.factor = self.factor.to(x.device)
+    def fix_z_transitions(self):
+        self.transition_matrix_z_z.requires_grad = False
+
+    def fix_n_emissions(self):
+        self.length_emission_matrix_z_n.requires_grad = False
+
+    def forward(self, x, x_lengths, subseq_ids):
         z_per_z = self.z_per_z.clone() # vocab_size_z, vocab_size_z
         
         z_per_z = torch.log_softmax(z_per_z, dim=-1) # vocab_size_z, vocab_size_z
         l_per_z = torch.log_softmax(torch.cat((self.l_per_z.new(self.vocab_size_z, self.min_length_z).fill_(NEG_INF), self.l_per_z), dim=-1), dim=-1) # vocab_size_z, max_length
-        #self.ngram_per_z.data[:, :, self.pad_idx] = -float('inf')
         #ngram_per_z = torch.log_softmax(self.ngram_per_z, dim=-1) # vocab_size_z, vocab_size_x ** (ngrams-1), vocab_size_x
         #ngram_per_z.data[:, :, self.pad_idx] = 0
         #ngram_per_z = ngram_per_z.view(self.vocab_size_z, -1)

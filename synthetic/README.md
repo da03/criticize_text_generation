@@ -122,6 +122,7 @@ For the first training phase:
 ```
 python scripts/train_hsmm/train.py \
     --dataset_folder data \
+    --vocab_folder language_model_checkpoints/hsmm \
     --checkpoint_folder language_model_checkpoints/hsmm \
     --Z 800 \
     --fix_z_transitions \
@@ -136,6 +137,7 @@ For the second training phase:
 ```
 python scripts/train/train.py \
     --dataset_folder data \
+    --vocab_folder language_model_checkpoints/hsmm \
     --checkpoint_folder language_model_checkpoints/hsmm \
     --M 800 \
     --batch_size 8 \

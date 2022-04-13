@@ -1,5 +1,7 @@
 import os
 import re
+import glob
+import tqdm
 
 import torch
 import torchtext.legacy as tt
@@ -16,18 +18,18 @@ class HSMMDataset(tt.data.Dataset):
     
     examples = []
     # Get text
-    with open(path+'.x') as fin:
+    with open(path) as fin:
         for line in fin:
             ex = tt.data.Example()
             ex.text = text_field.preprocess(line.strip()) 
             examples.append(ex)
     
     # Get ngram ids
-    for ngram_field_name, ngram_field in ngram_fields:
+    for ngram_field_name, ngram_field in tqdm.tqdm(ngram_fields):
         m = re.match(r'(\d+)_gram', ngram_field_name)
         n = int(m.group(1))
         ngram_filename = path + f'.{n}-gram'
-        assert os.path.exists(ngram_filename)
+        assert os.path.exists(ngram_filename), ngram_filename
         with open(ngram_filename) as fin:
             for i, line in enumerate(fin):
                 setattr(examples[i], ngram_field_name, ngram_field.preprocess(line.strip()))
@@ -66,8 +68,8 @@ def load_subseq_vocabs(foldername):
 def load_data(dataset_folder, vocab_folder, Z, batch_size, pad_token, unk_token):
     # Load subseq vocabs
     vocabs = load_subseq_vocabs(vocab_folder)
-    subseq_min_len = min(vocab.keys())
-    subseq_max_len = max(vocab.keys())
+    subseq_min_len = min(vocabs.keys())
+    subseq_max_len = max(vocabs.keys())
     subseq_vocab_sizes = {n: len(vocabs[n]) for n in vocabs}
 
     # Build fields
@@ -93,21 +95,22 @@ def load_data(dataset_folder, vocab_folder, Z, batch_size, pad_token, unk_token)
     # Build dataset splits
     train_data, val_data, test_data = HSMMDataset.splits(
             text_field, ngram_fields, path=dataset_folder,
-            train='train', validation='val', test='test')
+            train='train.x', validation='val.x', test='test.x')
 
     # Build vocabulary for text field
-    text_field.build_vocabulary(train_data.text)
+    text_field.build_vocab(train_data.text)
+    x_pad_id = text_field.vocab.stoi[text_field.pad_token]
 
     x_vocab_size = len(text_field.vocab)
     print (f"Size of text vocab: {x_vocab_size}")
 
     # Create data iterators
     train_iter, val_iter, test_iter= tt.data.BucketIterator.splits((train_data, val_data, test_data),
-            batch_size=BATCH_SIZE, 
+            batch_size=batch_size, 
             device=torch.device('cuda'),
             repeat=False, 
             sort_key=lambda x: len(x.text),
             sort_within_batch=True,
             )
 
-    return train_iter, val_iter, test_iter, subseq_vocab_sizes, x_vocab_size
+    return train_iter, val_iter, test_iter, subseq_vocab_sizes, x_vocab_size, x_pad_id
