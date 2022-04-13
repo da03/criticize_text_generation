@@ -1,6 +1,6 @@
 # Model Criticism for Text Generation
 
-Here we provide code to reproduce our results for "A Surprising Text Generation Failure". We provide all training data and training scripts, as well as all pretrained models used in our paper. Our code is built on top of [fairseq](https://github.com/pytorch/fairseq) and [pytorch-struct](https://github.com/harvardnlp/pytorch-struct).
+Here we provide code to reproduce our results for "A Surprising Text Generation Failure". We provide all training data and training scripts, as well as all pretrained models used in our paper. Our code is built on top of [fairseq](https://github.com/pytorch/fairseq) and [pytorch-struct](https://github.com/harvardnlp/pytorch-struct/tree/e51fecc1473925e4c44de135c4a3240fcb20fa40).
 
 ## Instructions for Other Experiments
 
@@ -12,7 +12,7 @@ The code has been tested on Python 3.8. In addition, we need
 
 * [Pytorch](https://pytorch.org/get-started/locally/)
 * [fairseq](https://github.com/huggingface/transformers/tree/0e608fdba6cd27bb2aa917e369a0f49a2c55cb1e)
-* [pytorch-struct](https://github.com/harvardnlp/pytorch-struct)
+* [pytorch-struct](https://github.com/harvardnlp/pytorch-struct/tree/e51fecc1473925e4c44de135c4a3240fcb20fa40)
 
 We use a particular version of fairseq and apply a patch:
 
@@ -25,6 +25,15 @@ git apply /path/to/current_repo/synthetic/scripts/utils/fix_lm_sampling.patch
 pip install --editable .
 ```
 
+For HSMM language model training and sampling, we use a particular version of pytorch-struct and also apply a patch for more memory-efficient partition computation.
+
+```
+git clone git@github.com:harvardnlp/pytorch-struct.git
+cd pytorch-struct
+git checkout e51fecc1473925e4c44de135c4a3240fcb20fa40
+git apply /path/to/current_repo/synthetic/scripts/utils/memory_efficient_semimarkov.patch
+pip install --editable .
+```
 
 ## Dataset & Pretrained Models
 

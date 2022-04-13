@@ -1,0 +1,242 @@
+diff --git a/torch_struct/semimarkov.py b/torch_struct/semimarkov.py
+index 3c5a4bd..79017c1 100644
+--- a/torch_struct/semimarkov.py
++++ b/torch_struct/semimarkov.py
+@@ -34,7 +34,7 @@ class SemiMarkov(_Struct):
+         )
+ 
+         # Init.
+-        mask = torch.zeros(*init.shape).bool()
++        mask = torch.zeros(*init.shape, device=log_potentials.device).bool()
+         mask[:, :, :, 0, 0].diagonal(0, -2, -1).fill_(True)
+         init = semiring.fill(init, mask, semiring.one)
+ 
+@@ -61,10 +61,12 @@ class SemiMarkov(_Struct):
+         c[:, :, : K - 1, 0] = semiring.sum(
+             torch.stack([c.data[:, :, : K - 1, 0], lp[:, :, 1:K]], dim=-1)
+         )
+-        end = torch.min(lengths) - 1
+-        mask = torch.zeros(*init.shape).bool()
++        import pdb; pdb.set_trace()
++        mask = torch.zeros(*init.shape, device=log_potentials.device).bool()
+         for k in range(1, K - 1):
+-            mask[:, :, : end - (k - 1), k - 1, k].diagonal(0, -2, -1).fill_(True)
++            for b in range(batch):
++                end = lengths.max() - 1
++                mask[:, b, : end - (k - 1), k - 1, k].diagonal(0, -2, -1).fill_(True)
+         init = semiring.fill(init, mask, semiring.one)
+ 
+         K_1 = K - 1
+@@ -83,38 +85,137 @@ class SemiMarkov(_Struct):
+         v = semiring.sum(semiring.sum(final[:, :, 0, :, 0, :].contiguous()))
+         return v, [log_potentials]
+ 
+-    # def _dp_standard(self, edge, lengths=None, force_grad=False):
+-    #     semiring = self.semiring
+-    #     ssize = semiring.size()
+-    #     edge, batch, N, K, C, lengths = self._check_potentials(edge, lengths)
+-    #     edge.requires_grad_(True)
+-
+-    #     # Init
+-    #     # All paths starting at N of len K
+-    #     alpha = self._make_chart(1, (batch, N, K, C), edge, force_grad)[0]
+-
+-    #     # All paths finishing at N with label C
+-    #     beta = self._make_chart(N, (batch, C), edge, force_grad)
+-    #     semiring.one_(beta[0].data)
+-
+-    #     # Main.
+-    #     for n in range(1, N):
+-    #         alpha[:, :, n - 1] = semiring.dot(
+-    #             beta[n - 1].view(ssize, batch, 1, 1, C),
+-    #             edge[:, :, n - 1].view(ssize, batch, K, C, C),
+-    #         )
+-
+-    #         t = max(n - K, -1)
+-    #         f1 = torch.arange(n - 1, t, -1)
+-    #         f2 = torch.arange(1, len(f1) + 1)
+-    #         beta[n][:] = semiring.sum(
+-    #             torch.stack([alpha[:, :, a, b] for a, b in zip(f1, f2)], dim=-1)
+-    #         )
+-    #     v = semiring.sum(
+-    #         torch.stack([beta[l - 1][:, i] for i, l in enumerate(lengths)], dim=1)
+-    #     )
+-    #     return v, [edge], beta
++    def _dp_standard(self, edge, lengths=None, force_grad=False):
++        semiring = self.semiring
++        ssize = semiring.size()
++        edge, batch, N, K, C, lengths = self._check_potentials(edge, lengths)
++        edge.requires_grad_(True)
++
++        # Init
++        # All paths starting at N of len K
++        alpha = self._make_chart(1, (batch, N, K, C), edge, force_grad)[0]
++
++        # All paths finishing at N with label C
++        beta = self._make_chart(N, (batch, C), edge, force_grad)
++        beta[0] = semiring.fill(beta[0], torch.tensor(True).to(edge.device), semiring.one)
++
++        # Main.
++        for n in range(1, N):
++            alpha[:, :, n - 1] = semiring.dot(
++                beta[n - 1].view(ssize, batch, 1, 1, C),
++                edge[:, :, n - 1].view(ssize, batch, K, C, C),
++            )
++
++            t = max(n - K, -1)
++            f1 = torch.arange(n - 1, t, -1)
++            f2 = torch.arange(1, len(f1) + 1)
++            beta[n][:] = semiring.sum(
++                torch.stack([alpha[:, :, a, b] for a, b in zip(f1, f2)], dim=-1)
++            )
++        v = semiring.sum(
++            torch.stack([beta[l - 1][:, i] for i, l in enumerate(lengths)], dim=1)
++        )
++        return v, [edge], beta
++
++    def _dp_standard_efficient(self, init_z_1, transition_z_to_z, transition_z_to_l, emission_n_l_z, lengths=None, force_grad=False):
++        #import pdb; pdb.set_trace()
++        semiring = self.semiring
++        ssize = semiring.size()
++        #edge, batch, N, K, C, lengths = self._check_potentials(edge, lengths)
++# edge: 1, b, N, K, C, C
++        batch, N_1, K, C = emission_n_l_z.shape
++        N = N_1 + 1
++        #edge.requires_grad_(True)
++        init_z_1 = self.semiring.convert(init_z_1)
++        transition_z_to_z = self.semiring.convert(transition_z_to_z).transpose(-1, -2) # 1, C, C
++        transition_z_to_l = self.semiring.convert(transition_z_to_l).transpose(-1, -2).view(1, 1, K, C)
++        emission_n_l_z = self.semiring.convert(emission_n_l_z) # 1, b, N, K, C
++
++        # Init
++        # All paths starting at N of len K
++        #alpha = self._make_chart(1, (batch, N, K, C), init_z_1, force_grad)[0]
++        #alpha = self._make_chart(N, (batch, K, C), init_z_1, force_grad)
++        alpha = [_ for _ in range(N)]
++
++        # All paths finishing at N with label C
++        beta = self._make_chart(N, (batch, C), init_z_1, force_grad)
++        beta[0] = semiring.fill(beta[0], torch.tensor(True).to(init_z_1.device), semiring.one)
++
++        # Main.
++        for n in range(1, N):
++            # edge: 1, b, K, C, C
++            #alpha[:, :, n - 1] = semiring.dot(
++            #    beta[n - 1].view(ssize, batch, 1, 1, C),
++            #    edge[:, :, n - 1].view(ssize, batch, K, C, C),
++            #)
++            # second: emission
++            transition = transition_z_to_z # 1, C, C, same order as edge
++            if n == 1:
++                transition = transition + init_z_1.view(1, 1, C)
++            score = semiring.dot(
++                beta[n - 1].view(ssize, batch, 1, 1, C),
++                transition.view(ssize, 1, 1, C, C),
++            ) # 1, b, 1, 1, C
++
++
++            # last: transitoin
++            emission = emission_n_l_z[:, :, n-1] # 1, b, K, C
++            alpha[n-1] = score + emission + transition_z_to_l # 1, b, K, C
++
++            t = max(n - K, -1)
++            f1 = torch.arange(n - 1, t, -1)
++            f2 = torch.arange(1, len(f1) + 1)
++            #beta[n][:] = semiring.sum(
++            #    torch.stack([alpha[:, :, a, b] for a, b in zip(f1, f2)], dim=-1)
++            #)
++            beta[n] = semiring.sum(
++                torch.stack([alpha[a][:, :, b] for a, b in zip(f1, f2)], dim=-1)
++            )
++        v = semiring.sum(
++            torch.stack([beta[l - 1][:, i] for i, l in enumerate(lengths)], dim=1)
++        )
++        return v
+ 
++    # Adapters
++    @staticmethod
++    def hsmm(init_z_1, transition_z_to_z, transition_z_to_l, emission_n_l_z):
++        """
++        Convert HSMM log-probs to edge scores.
++
++        Parameters:
++            init_z_1: C or b x C (init_z[i] = log P(z_{-1}=i), note that z_{-1} is an
++                      auxiliary state whose purpose is to induce a distribution over z_0.)
++            transition_z_to_z: C X C (transition_z_to_z[i][j] = log P(z_{n+1}=j | z_n=i),
++                               note that the order of z_{n+1} and z_n is different
++                               from `edges`.)
++            transition_z_to_l: C X K (transition_z_to_l[i][j] = P(l_n=j | z_n=i))
++            emission_n_l_z: b x N x K x C
++
++        Returns:
++            edges: b x (N-1) x K x C x C, where edges[b, n, k, c2, c1]
++                   = log P(z_n=c2 | z_{n-1}=c1) + log P(l_n=k | z_n=c2)
++                     + log P(x_{n:n+l_n} | z_n=c2, l_n=k), if n>0
++                   = log P(z_n=c2 | z_{n-1}=c1) + log P(l_n=k | z_n=c2)
++                     + log P(x_{n:n+l_n} | z_n=c2, l_n=k) + log P(z_{-1}), if n=0
++        """
++        batch, N, K, C = emission_n_l_z.shape
++        edges = torch.zeros(batch, N, K, C, C).type_as(emission_n_l_z)
++
++        # initial state: log P(z_{-1})
++        if init_z_1.dim() == 1:
++            init_z_1 = init_z_1.unsqueeze(0).expand(batch, -1)
++        edges[:, 0, :, :, :] += init_z_1.view(batch, 1, 1, C)
++
++        # transitions: log P(z_n | z_{n-1})
++        edges += transition_z_to_z.transpose(-1, -2).view(1, 1, 1, C, C)
++
++        # l given z: log P(l_n | z_n)
++        edges += transition_z_to_l.transpose(-1, -2).view(1, 1, K, C, 1)
++
++        # emissions: log P(x_{n:n+l_n} | z_n, l_n)
++        edges += emission_n_l_z.view(batch, N, K, C, 1)
++
++        return edges
+     @staticmethod
+     def to_parts(sequence, extra, lengths=None):
+         """
+@@ -173,3 +274,30 @@ class SemiMarkov(_Struct):
+             labels[on[i][0], on[i][1] + on[i][2]] = on[i][3]
+         # print(edge.nonzero(), labels)
+         return labels, (C, K)
++    def enumerate(self, edge):
++        semiring = self.semiring
++        ssize = semiring.size()
++        batch, N, K, C, _ = edge.shape
++        edge = semiring.convert(edge)
++        chains = {}
++        chains[0] = [
++            ([(c, 0)], semiring.fill(torch.zeros(ssize, batch), torch.tensor(True), semiring.one)) for c in range(C)
++        ]
++
++        for n in range(1, N + 1):
++            chains[n] = []
++            for k in range(1, K):
++                if n - k not in chains:
++                    continue
++                for chain, score in chains[n - k]:
++                    for c in range(C):
++                        chains[n].append(
++                            (
++                                chain + [(c, k)],
++                                semiring.mul(
++                                    score, edge[:, :, n - k, k, c, chain[-1][0]]
++                                ),
++                            )
++                        )
++        ls = [s for (_, s) in chains[N]]
++        return semiring.unconvert(semiring.sum(torch.stack(ls, dim=1), dim=1)), chains[N]
+diff --git a/torch_struct/semirings/semirings.py b/torch_struct/semirings/semirings.py
+index cfc2311..05e761a 100644
+--- a/torch_struct/semirings/semirings.py
++++ b/torch_struct/semirings/semirings.py
+@@ -50,7 +50,7 @@ class Semiring:
+     @staticmethod
+     def fill(c, mask, v):
+         return torch.where(
+-            mask, v.type_as(c).view((-1,) + (1,) * (len(c.shape) - 1)), c
++            mask, v.type_as(c).to(c.device).view((-1,) + (1,) * (len(c.shape) - 1)), c
+         )
+ 
+     @classmethod
