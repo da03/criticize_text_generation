@@ -79,6 +79,8 @@ def load_data(dataset_folder, vocab_folder, Z, batch_size, pad_token, unk_token)
     ngram_fields = []
     for n in range(subseq_min_len, subseq_max_len+1):
         vocab = vocabs[n]
+        subseq_pad_id = vocab[pad_token]
+        subseq_unk_id = vocab[unk_token]
         ngram_field = tt.data.Field(include_lengths=True,
                 batch_first=True,
                 tokenize=tokenize,
@@ -113,4 +115,4 @@ def load_data(dataset_folder, vocab_folder, Z, batch_size, pad_token, unk_token)
             sort_within_batch=True,
             )
 
-    return train_iter, val_iter, test_iter, subseq_vocab_sizes, x_vocab_size, x_pad_id
+    return train_iter, val_iter, test_iter, subseq_vocab_sizes, x_pad_id, subseq_pad_id, subseq_unk_id

@@ -4,7 +4,7 @@ import argparse
 import time
 
 from data import load_data
-from model import *
+from model import HSMMModel
 
 import torch.nn as nn
 
@@ -53,7 +53,7 @@ parser.add_argument('--accumulate', type=int, default=1,
 
 def compute_loss_and_backward(model, x, x_lengths, subseq_ids, num_words, accumulate, backward=True):
     batch_size, seq_len = x.size()
-    if (not backward) or (seq_len <= 390 and batch_size <= 4):
+    if (not backward) or (seq_len <= 390) or (batch_size <= 4):
         logits = model(x, x_lengths, subseq_ids)
         loss = -logits.sum()
         if backward:
@@ -68,7 +68,7 @@ def compute_loss_and_backward(model, x, x_lengths, subseq_ids, num_words, accumu
                 {k:subseq_ids[k][split:].contiguous() for k in subseq_ids}, num_words, accumulate)
         return loss1 + loss2
             
-def get_subseq_ids(batch):
+def get_subseq_ids(batch, subseq_vocab_sizes):
     subseq_ids = {}
     for n in subseq_vocab_sizes:
         subseq_id, subseq_length = getattr(batch, f'{n}_gram')
@@ -85,11 +85,11 @@ def main(args):
     unk_token = args.unk_token
 
     # Load data
-    train_iter, val_iter, test_iter, subseq_vocab_sizes, x_vocab_size, x_pad_id \
+    train_iter, val_iter, test_iter, subseq_vocab_sizes, x_pad_id, subseq_pad_id, subseq_unk_id \
             = load_data(dataset_folder, vocab_folder, Z, batch_size, pad_token, unk_token)
 
     # Build model
-    model = HSMMModel(Z, x_vocab_size, subseq_vocab_sizes)
+    model = HSMMModel(Z, subseq_vocab_sizes, subseq_pad_id=subseq_pad_id, subseq_unk_id=subseq_unk_id)
     model.cuda()
 
     if args.fix_z_transitions:
@@ -122,7 +122,7 @@ def main(args):
             num_words = x.ne(x_pad_id).sum().item()
             running_words += num_words
          
-            subseq_ids = get_subseq_ids(batch)
+            subseq_ids = get_subseq_ids(batch, subseq_vocab_sizes)
 
             loss = compute_loss_and_backward(model, x, x_lengths, subseq_ids, num_words, args.accumulate)
             running_loss += loss
@@ -163,7 +163,7 @@ def main(args):
                 num_words = x.ne(pad_idx).sum().item()
          
                 total_words_val += num_words
-                subseq_ids = get_subseq_ids(batch)
+                subseq_ids = get_subseq_ids(batch, subseq_vocab_sizes)
                 loss = compute_loss_and_backward(model, x, x_lengths, subseq_ids, num_words, args.accumulate, backward=False)
                 total_loss_val += loss.item()
         val_PPL = math.exp(total_loss_val / total_words_val)

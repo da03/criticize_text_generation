@@ -139,7 +139,7 @@ python scripts/train/train.py \
     --dataset_folder data \
     --vocab_folder language_model_checkpoints/hsmm \
     --checkpoint_folder language_model_checkpoints/hsmm \
-    --M 800 \
+    --Z 800 \
     --batch_size 8 \
     --epochs 10 \
     --lr 3e-1 \
@@ -173,6 +173,19 @@ grep ^H log.generate.transformer | cut -f3- > generation.transformer.txt
 
 #### Generate from HSMM LM
 
+To generate from a trained HSMM language model:
+
+```
+python scripts/train_HSMM/generate.py \
+    --checkpoint_path langauge_model_checkpoints/hsmm/best.pt \
+    --vocab_folder langauge_model_checkpoints/hsmm/ \
+    --num_samples 6400 \
+    --output_file generation.HSMM.txt
+```
+
+The generations will be written to `generation.HSMM.txt`.
+
+
 ### Posterior Inference
 
 The goal of posterior inference is to infer the latent states z conditioned on observed x. By design the posterior distribution is a delta distribution so we can find a deterministic mapping from x to z.
@@ -183,6 +196,13 @@ python scripts/posterior_inference/infer_z.py \
        --dataset_folder data \
        --input_file generation.transformer.txt \
        --output_file predicted_z.generation.transformer.txt
+```
+
+```
+python scripts/posterior_inference/infer_z.py \
+       --dataset_folder data \
+       --input_file generation.HSMM.txt \
+       --output_file predicted_z.generation.HSMM.txt
 ```
 
 #### Generate from HSMM LM
@@ -198,4 +218,10 @@ python scripts/criticize/criticize.py \
        --input_file_z predicted_z.generation.transformer.txt
 ```
 
-The output will contain the latent PPL for both real data and LM generations.
+```
+python scripts/criticize/criticize.py \
+       --dataset_folder data/ \
+       --input_file_z predicted_z.generation.HSMM.txt
+```
+
+The outputs will contain the latent PPL for both real data and LM generations.
