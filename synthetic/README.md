@@ -28,7 +28,7 @@ pip install --editable .
 
 ## Dataset & Pretrained Models
 
-* [data](https://drive.google.com/file/d/1qIIJBc6JhxSipsdz7X9XgEPsBPrB5PDS/view?usp=sharing) [GPT-2 LM](https://drive.google.com/file/d/1MQleq0eBW3vxQU0fd_xTIAMPuSakL4vu/view?usp=sharing) [GPT-Neo LM](https://drive.google.com/file/d/13QbzOCnpjQuhoZ4ZSFMz87FmQ7CLPPCf/view?usp=sharing) [Posterior Inferencer](https://drive.google.com/file/d/1-BwbijwD6nIKOMOkV3FOWqRHdHKIuaqY/view?usp=sharing)
+* [data](https://drive.google.com/file/d/19jqKf6oVgVuwHkFWrUmqjaYT_KywjKCo/view?usp=sharing) [Transformer LM](https://drive.google.com/file/d/1ayfQXTY4h4wcNxFNbnyYScB6uOlMm7yr/view?usp=sharing) [HSMM LM]()
 
 
 ### Data Format
@@ -143,7 +143,7 @@ python scripts/train/train.py \
     --batch_size 8 \
     --epochs 10 \
     --lr 3e-1 \
-    --train_from language_model_checkpoints/hsmm/best.pt > log.train.HSMM.phase2 2>&1&
+    --train_from language_model_checkpoints/hsmm/checkpoint_best.pt > log.train.HSMM.phase2 2>&1&
 ```
 
 Note that due to the small batch size used (since the emission parameters consume a lot of memory. Besides, HSMM inference is memory-intensive), training is extremely slow and can take a week on a single Nvidia A100 GPU.
@@ -177,7 +177,7 @@ To generate from a trained HSMM language model:
 
 ```
 python scripts/train_hsmm/generate.py \
-    --checkpoint_path language_model_checkpoints/hsmm/best.pt \
+    --checkpoint_path language_model_checkpoints/hsmm/checkpoint_best.pt \
     --vocab_folder language_model_checkpoints/hsmm/ \
     --num_samples 6400 \
     --output_file generation.HSMM.txt

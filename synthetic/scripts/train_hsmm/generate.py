@@ -8,7 +8,7 @@ from data import load_subseq_vocabs
 from model import HSMMModel
 
 parser = argparse.ArgumentParser(description='Sample from a trained HSMM language model.')
-parser.add_argument('--checkpoint_path', type=str, default='language_model_checkpoints/hsmm/best.pt',
+parser.add_argument('--checkpoint_path', type=str, default='language_model_checkpoints/hsmm/checkpoint_best.pt',
                     help='The path of the trained model.')
 parser.add_argument('--output_file', type=str, required=True,
                     help='Output file storing samples from the language model.')

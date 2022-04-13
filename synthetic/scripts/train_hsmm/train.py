@@ -147,7 +147,7 @@ def main(args):
                             print (f'Decay lr to {g["lr"]}')
 
                 if step % args.save_every == 0:
-                    save_path = os.path.join(args.checkpoint_folder, 'last.pt')
+                    save_path = os.path.join(args.checkpoint_folder, 'checkpoint_last.pt')
                     torch.save(model.state_dict(), save_path)
                     print (f'Model saved to {save_pth}')
 
@@ -168,7 +168,7 @@ def main(args):
                 total_loss_val += loss.item()
         val_PPL = math.exp(total_loss_val / total_words_val)
         if val_PPL < best_val_PPL:
-            save_path = os.path.join(args.checkpoint_folder, 'best.pt')
+            save_path = os.path.join(args.checkpoint_folder, 'checkpoint_best.pt')
             torch.save(model.state_dict(), save_path)
             print (f'Model saved to {save_pth}')
             best_val_PPL = val_PPL
