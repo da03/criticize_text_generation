@@ -205,8 +205,6 @@ python scripts/posterior_inference/infer_z.py \
        --output_file predicted_z.generation.HSMM.txt
 ```
 
-#### Generate from HSMM LM
-
 ### Model Criticism in Latent Space
 
 Now we are ready to criticize in the latent space.
