@@ -59,7 +59,7 @@ def ignore_word(word, stopwords, word_df, ignore_containing, max_doc_freq_ratio)
     return False
 
 
-def construct_vocab(filename, filename_out, stopwords, word_df, ignore_containing, min_term_freq, max_doc_freq_ratio, compatible_mode=False):
+def construct_vocab(filename, stopwords, word_df, ignore_containing, min_term_freq, max_doc_freq_ratio, compatible_mode=False):
     freqs = collections.defaultdict(int)
     data = json.load(open(filename))
     if compatible_mode:
@@ -95,7 +95,7 @@ def main(args):
     compatible_mode = False
     if args.compatible_with_checkpoints and 'wiki' in dataset_folder.lower():
         compatible_mode = True
-    vocab = construct_vocab(train_file, vocab_file, stopwords, word_df, ignore_containing, args.min_term_freq, args.max_doc_freq_ratio, compatible_mode)
+    vocab = construct_vocab(train_file, stopwords, word_df, ignore_containing, args.min_term_freq, args.max_doc_freq_ratio, compatible_mode)
 
     vocab_file = train_file + '.CTM.vocab'
     with open(vocab_file, 'w') as fout:
