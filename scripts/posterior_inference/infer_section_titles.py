@@ -20,7 +20,7 @@ args = parser.parse_args()
 
 def main(args):
     tokenizer = AutoTokenizer.from_pretrained('bert-base-cased')
-    model = AutoModelForSequenceClassification.from_pretrained('/n/holyscratch01/rush_lab/Users/yuntian/hierarchy/pubmed-final-2k-dataset/bert2e5real')
+    model = AutoModelForSequenceClassification.from_pretrained(args.posterior_inferencer_checkpoint)
     model.cuda()
     model.eval()
 
