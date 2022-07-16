@@ -4,7 +4,7 @@ Here we provide code to reproduce our results for "Critiquing Discourse Coherenc
 
 ## Instructions for Other Experiments
 
-Instructions for "A Surprising Text Generation Failure" can be found at [synthetic/README.md](synthetic/README.md), and instructions for `Critiquing Topic Correlations'' can be found at [critique_topic_correlations/README.md](critique_topic_correlations/README.md).
+Instructions for "A Surprising Text Generation Failure" can be found at [synthetic/README.md](synthetic/README.md), instructions for "Critiquing Coreference Chains" can be found at [critique_coreference_chains/README.md](critique_coreference_chains/README.md), and instructions for "Critiquing Topic Correlations" can be found at [critique_topic_correlations/README.md](critique_topic_correlations/README.md).
 
 ## Prerequisites
 
