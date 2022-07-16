@@ -21,6 +21,8 @@ parser.add_argument('--max_length', type=int, default=20000,
                     help='Maximum possible generation length. Generation will stop after generating this many of tokens, if no eos token is generated.')
 parser.add_argument('--seed', type=int, default=1234,
                     help='Random seed.')
+parser.add_argument('--save_every', type=int, default=10,
+                    help='Dump to disk every this many samples.')
 args = parser.parse_args()
 
 
@@ -92,6 +94,8 @@ def main(args):
         sys.stdout.flush()
         sample = {'section_names': section_names, 'sections': sections}
         samples.append(sample)
+        if len(samples) % args.save_every == 0:
+            json.dump(samples, open(args.output_file, 'w'))
     json.dump(samples, open(args.output_file, 'w'))
 
 if __name__ == '__main__':
