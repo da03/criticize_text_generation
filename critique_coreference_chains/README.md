@@ -10,6 +10,17 @@ Instructions for "A Surprising Text Generation Failure" can be found at [../synt
 
 The code has been tested on Python 3.8. In addition, we need
 
+* [spacy 2.3.7](https://spacy.io/): `pip install spacy=2.3.7`. Note that we need to use spacy 2.x to be compatible with `neuralcoref`.
+* [neuralcoref](https://github.com/huggingface/neuralcoref): `pip install neuralcoref`
+
+We will use a spacy model `en_core_web_lg` in our code, so we also need to download it:
+
+```
+python -m spacy download en_core_web_lg
+```
+
+If you want to train a language model yourself, you will also need
+
 * [Pytorch](https://pytorch.org/get-started/locally/)
 * [Transformers](https://github.com/huggingface/transformers/tree/de635af3f1ef740aa32f53a9173269c6435e19e)
 
@@ -81,7 +92,7 @@ python run_language_modeling.py \
        --train_data_file=$TRAIN_FILE \
        --eval_data_file=$TEST_FILE --overwrite_output_dir --save_total_limit=5 \
        --learning_rate=5e-5 --num_train_epochs=${epochs} --load_best_model_at_end=True \
-       --evaluation_strategy=epoch --save_strategy=epoch > ${WORKING_DIR}/log.pubmed.trainLM.w_title.gpt2 2>&1&
+       --evaluation_strategy=epoch --save_strategy=epoch > ${WORKING_DIR}/log.wiki.trainLM.w_title.gpt2 2>&1&
 ```
 
 Note that above we only showed the training commands for the W/ Title setting. We use the same settings for the W/O Title setting except for the training and validation files.
@@ -106,7 +117,7 @@ python run_language_modeling.py \
        --train_data_file=$TRAIN_FILE \
        --eval_data_file=$TEST_FILE --overwrite_output_dir --save_total_limit=5 \
        --learning_rate=5e-5 --num_train_epochs=${epochs} --load_best_model_at_end=True \
-       --evaluation_strategy=epoch --save_strategy=epoch > ${WORKING_DIR}/log.pubmed.trainLM.w_title.gptneo 2>&1&
+       --evaluation_strategy=epoch --save_strategy=epoch > ${WORKING_DIR}/log.wiki.trainLM.w_title.gptneo 2>&1&
 
 ```
 
@@ -125,7 +136,7 @@ To generate from a trained language model, for the W/ Title setting:
 ```
  python scripts/generate/sample_LM.py \
         --language_model_checkpoint language_model_checkpoints/Wiki/GPT-2/With_Title \
-        --output_file generation.pubmed.w_title.gpt2.json \
+        --output_file generation.wiki.w_title.gpt2.json \
         --with_title \
         --num_samples 100
 ```
@@ -135,11 +146,22 @@ For the W/O Title setting:
 ```
  python scripts/generate/sample_LM.py \
         --language_model_checkpoint language_model_checkpoints/Wiki/GPT-2/Without_Title \
-        --output_file generation.pubmed.wo_title.gpt2.json \
+        --output_file generation.wiki.wo_title.gpt2.json \
         --num_samples 100
 ```
 
 Note that in the paper we used 10k samples, which requires setting `--num_samples` to 10000 (it takes much longer to generate 10k samples so we used 100 in the above example commands).
+
+### Extract Generations About Films
+
+As mentioned in the paper, we only consider generations about films only. To do this, we need to use the below command:
+
+```
+python scripts/data/extract_films.py --input_filename generation.wiki.w_title.gpt2.json --output_filename generation.wiki.w_title.gpt2.films.json
+python scripts/data/extract_films.py --input_filename generation.wiki.w_title.gptneo.json --output_filename generation.wiki.w_title.gptneo.films.json
+python scripts/data/extract_films.py --input_filename generation.wiki.wo_title.gpt2.json --output_filename generation.wiki.wo_title.gptneo.films.json
+python scripts/data/extract_films.py --input_filename generation.wiki.wo_title.gptneo.json --output_filename generation.wiki.wo_title.gptneo.films.json
+```
 
 ### Fit Critic Generative Processes (Optional)
 

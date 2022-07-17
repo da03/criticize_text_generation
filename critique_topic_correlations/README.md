@@ -91,7 +91,7 @@ python run_language_modeling.py \
        --train_data_file=$TRAIN_FILE \
        --eval_data_file=$TEST_FILE --overwrite_output_dir --save_total_limit=5 \
        --learning_rate=5e-5 --num_train_epochs=${epochs} --load_best_model_at_end=True \
-       --evaluation_strategy=epoch --save_strategy=epoch > ${WORKING_DIR}/log.wiki.trainLM.w_title.gpt2 2>&1&
+       --evaluation_strategy=epoch --save_strategy=epoch > ${WORKING_DIR}/log.pubmed.trainLM.w_title.gpt2 2>&1&
 ```
 
 Note that above we only showed the training commands for the W/ Title setting. We use the same settings for the W/O Title setting except for the training and validation files.
@@ -116,7 +116,7 @@ python run_language_modeling.py \
        --train_data_file=$TRAIN_FILE \
        --eval_data_file=$TEST_FILE --overwrite_output_dir --save_total_limit=5 \
        --learning_rate=5e-5 --num_train_epochs=${epochs} --load_best_model_at_end=True \
-       --evaluation_strategy=epoch --save_strategy=epoch > ${WORKING_DIR}/log.wiki.trainLM.w_title.gptneo 2>&1&
+       --evaluation_strategy=epoch --save_strategy=epoch > ${WORKING_DIR}/log.pubmed.trainLM.w_title.gptneo 2>&1&
 
 ```
 
