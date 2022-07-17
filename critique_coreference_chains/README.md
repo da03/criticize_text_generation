@@ -26,14 +26,15 @@ pip install --editable .
 
 ## Datasets & Pretrained Models
 
-For this section we only use the Wikipedia dataset Wiki, since it contains richer coreference structures. We copied over commands to train a language model and generate from it, but we highly recommend directly downloading the model generations.
+For this section we only use the Wikipedia dataset, since it contains richer coreference structures. We copied over commands to train a language model and generate from it, but we recommend directly using the provided LM generations to save time.
 
-* Wiki: [data](https://drive.google.com/file/d/1stCsnajY-DB9U2-LS32tmdmsZJHtAxte/view?usp=sharing) [Model Generations](TODO) [GPT-2 LM](https://drive.google.com/file/d/1u4-ezV74UIec6uTkMxciX8oNkHGCtq1y/view?usp=sharing) [GPT-Neo LM](https://drive.google.com/file/d/1V6S05FxaKXGff5khe87uJbsdsCVTCkGl/view?usp=sharing)
+* [data](https://drive.google.com/file/d/1stCsnajY-DB9U2-LS32tmdmsZJHtAxte/view?usp=sharing) [GPT-2 LM](https://drive.google.com/file/d/1u4-ezV74UIec6uTkMxciX8oNkHGCtq1y/view?usp=sharing) [GPT-Neo LM](https://drive.google.com/file/d/1V6S05FxaKXGff5khe87uJbsdsCVTCkGl/view?usp=sharing)
+* LM generations: included in this repo in files `generation.wiki.w_title.gpt2.json`, `generation.wiki.w_title.gptneo.json`, `generation.wiki.wo_title.gpt2.json`, and `generation.wiki.wo_title.gptneo.json`.
 
 
 ### Data Format
 
-Each dataset split is a list of dictionaries, where each dictionary is an example containing two fields: "sections", which is a list of section texts, and "section_names", which is a list of section titles.
+Each dataset split is a list of dictionaries, where each dictionary is an example containing two fields: "sections", which is a list of section texts, and "section_names", which is a list of section titles. Model generations follow the same format, except that for the W/O Title setting "section_names" is always `None`.
 
 
 ## Usage
@@ -47,7 +48,7 @@ export WORKING_DIR=$(pwd)
 
 ### Train LMs (Optional)
 
-In the paper we only presented results for the with section titles setting (W/ Title). Here we provide code for both the with section titles setting (W/ Title) and the without section titles setting (W/O Title). We need to first process data according to these settings, using the script `scripts/data/process_data_for_LMs.py`. Note that this section can be skipped if you download the pretrained language models listed above, or if you directly download the model generations from above.
+In the paper we only presented results for the with section titles setting (W/ Title). Here we provide code for both the with section titles setting (W/ Title) and the without section titles setting (W/O Title). We need to first process data according to these settings, using the script `scripts/data/process_data_for_LMs.py`. Note that this section can be skipped if you download the pretrained language models listed above, or if you directly use the provided model generations.
 
 ```
 python scripts/data/process_data_for_LMs.py --dataset_folder data/Wiki/
