@@ -40,7 +40,7 @@ pip install --editable .
 For this section we only use the Wikipedia dataset, since it contains richer coreference structures. We copied over commands to train a language model and generate from it, but we recommend directly using the provided LM generations to save time.
 
 * [data](https://drive.google.com/file/d/1stCsnajY-DB9U2-LS32tmdmsZJHtAxte/view?usp=sharing) [GPT-2 LM](https://drive.google.com/file/d/1u4-ezV74UIec6uTkMxciX8oNkHGCtq1y/view?usp=sharing) [GPT-Neo LM](https://drive.google.com/file/d/1V6S05FxaKXGff5khe87uJbsdsCVTCkGl/view?usp=sharing)
-* LM generations: included in this repo in files `generation.wiki.w_title.gpt2.json`, `generation.wiki.w_title.gptneo.json`, `generation.wiki.wo_title.gpt2.json`, and `generation.wiki.wo_title.gptneo.json`.
+* LM generations: included in this repo in files `generation.wiki.w_title.gpt2.films.json`, `generation.wiki.w_title.gptneo.films.json`, `generation.wiki.wo_title.gpt2.films.json`, and `generation.wiki.wo_title.gptneo.films.json`.
 
 
 ### Data Format
@@ -157,11 +157,16 @@ Note that in the paper we used 10k samples, which requires setting `--num_sample
 As mentioned in the paper, we only consider generations about films only. To do this, we need to use the below command:
 
 ```
+# Process LM generations
 python scripts/data/extract_films.py --input_filename generation.wiki.w_title.gpt2.json --output_filename generation.wiki.w_title.gpt2.films.json
 python scripts/data/extract_films.py --input_filename generation.wiki.w_title.gptneo.json --output_filename generation.wiki.w_title.gptneo.films.json
 python scripts/data/extract_films.py --input_filename generation.wiki.wo_title.gpt2.json --output_filename generation.wiki.wo_title.gptneo.films.json
 python scripts/data/extract_films.py --input_filename generation.wiki.wo_title.gptneo.json --output_filename generation.wiki.wo_title.gptneo.films.json
 python scripts/data/extract_films.py --input_filename generation.wiki.wo_title.gptneo.json --output_filename generation.wiki.wo_title.gptneo.films.json
+# Process data
+python scripts/data/extract_films.py --input_filename data/Wiki/train.json --output_filename data/Wiki/train.films.json&
+python scripts/data/extract_films.py --input_filename data/Wiki/val.json   --output_filename data/Wiki/val.films.json&
+python scripts/data/extract_films.py --input_filename data/Wiki/test.json  --output_filename data/Wiki/test.films.json&
 ```
 
 ### Extract Coreference Chains
@@ -169,7 +174,12 @@ python scripts/data/extract_films.py --input_filename generation.wiki.wo_title.g
 Next, we use huggingface's package `neuralcoref` to perform coreference resolution and extract coreference chains.
 
 ```
+# Process LM generations
 python scripts/posterior_inference/infer_coreference_chains.py --input_filename generation.wiki.w_title.gpt2.films.json --output_filename generation.wiki.w_title.gpt2.films.coref.json
+# Process data
+python scripts/posterior_inference/infer_coreference_chains.py --input_filename data/Wiki/train.films.json --output_filename data/Wiki/train.films.coref.json &
+python scripts/posterior_inference/infer_coreference_chains.py --input_filename data/Wiki/val.films.json --output_filename data/Wiki/val.films.coref.json&
+python scripts/posterior_inference/infer_coreference_chains.py --input_filename data/Wiki/test.films.json --output_filename data/Wiki/test.films.coref.json&
 ```
 
 ### Fit Critic Generative Processes (Optional)
