@@ -40,6 +40,7 @@ pip install --editable .
 For this section we only use the Wikipedia dataset, since it contains richer coreference structures. We copied over commands to train a language model and generate from it, but we recommend directly using the provided LM generations to save time.
 
 * [data](https://drive.google.com/file/d/1stCsnajY-DB9U2-LS32tmdmsZJHtAxte/view?usp=sharing) [GPT-2 LM](https://drive.google.com/file/d/1u4-ezV74UIec6uTkMxciX8oNkHGCtq1y/view?usp=sharing) [GPT-Neo LM](https://drive.google.com/file/d/1V6S05FxaKXGff5khe87uJbsdsCVTCkGl/view?usp=sharing)
+* Processed data: included in this repo in files `data/Wiki/train.films.json`, `data/Wiki/val.films.json`, and `data/Wiki/test.films.json`.
 * LM generations: included in this repo in files `generation.wiki.w_title.gpt2.films.json`, `generation.wiki.w_title.gptneo.films.json`, `generation.wiki.wo_title.gpt2.films.json`, and `generation.wiki.wo_title.gptneo.films.json`.
 
 
@@ -164,66 +165,33 @@ python scripts/data/extract_films.py --input_filename generation.wiki.wo_title.g
 python scripts/data/extract_films.py --input_filename generation.wiki.wo_title.gptneo.json --output_filename generation.wiki.wo_title.gptneo.films.json
 python scripts/data/extract_films.py --input_filename generation.wiki.wo_title.gptneo.json --output_filename generation.wiki.wo_title.gptneo.films.json
 # Process data
-python scripts/data/extract_films.py --input_filename data/Wiki/train.json --output_filename data/Wiki/train.films.json&
-python scripts/data/extract_films.py --input_filename data/Wiki/val.json   --output_filename data/Wiki/val.films.json&
-python scripts/data/extract_films.py --input_filename data/Wiki/test.json  --output_filename data/Wiki/test.films.json&
+python scripts/data/extract_films.py --input_filename data/Wiki/train.json --output_filename data/Wiki/train.films.json
+python scripts/data/extract_films.py --input_filename data/Wiki/val.json   --output_filename data/Wiki/val.films.json
+python scripts/data/extract_films.py --input_filename data/Wiki/test.json  --output_filename data/Wiki/test.films.json
 ```
 
-### Extract Coreference Chains
+### Posterior Inference - Extract Coreference Chains
 
-Next, we use huggingface's package `neuralcoref` to perform coreference resolution and extract coreference chains.
+The goal of posterior inference is to infer the coreference chains z conditioned on text x. We use huggingface's off-the-shell tool `neuralcoref` to perform coreference resolution and extract coreference chains.
 
 ```
 # Process LM generations
 python scripts/posterior_inference/infer_coreference_chains.py --input_filename generation.wiki.w_title.gpt2.films.json --output_filename generation.wiki.w_title.gpt2.films.coref.json
 # Process data
-python scripts/posterior_inference/infer_coreference_chains.py --input_filename data/Wiki/train.films.json --output_filename data/Wiki/train.films.coref.json &
-python scripts/posterior_inference/infer_coreference_chains.py --input_filename data/Wiki/val.films.json --output_filename data/Wiki/val.films.coref.json&
-python scripts/posterior_inference/infer_coreference_chains.py --input_filename data/Wiki/test.films.json --output_filename data/Wiki/test.films.coref.json&
+python scripts/posterior_inference/infer_coreference_chains.py --input_filename data/Wiki/train.films.json --output_filename data/Wiki/train.films.coref.json
+python scripts/posterior_inference/infer_coreference_chains.py --input_filename data/Wiki/val.films.json --output_filename data/Wiki/val.films.coref.json
+python scripts/posterior_inference/infer_coreference_chains.py --input_filename data/Wiki/test.films.json --output_filename data/Wiki/test.films.coref.json
 ```
 
 ### Fit Critic Generative Processes (Optional)
 
-We need to fit the critic distribution $P_c(z)$ (this step is optional if you use the pretrained critic models):
+We need to fit the critic distribution $P_c(z)$ (this step is optional if you use the pretrained critic model):
 
 ```
-python scripts/criticize/fit_critic.py --dataset_folder data/PubMed/ --output_folder critic_checkpoints/PubMed/
+python scripts/criticize/fit_critic.py --train_coreference_chains data/Wiki/train.films.coref.json --output_critic_filename data/Wiki/train.films.coref.critic.pt
 ```
 
-### Train Posterior Inferencers (Optional)
 
-We use huggingface transformer's script `examples/pytorch/text-classification/run_glue.py` to train a posterior inferencer. First, we need to prepare data according to its expected format, using the script `scripts/data/process_data_for_posterior_inferencers.py`. Note that this section can be skipped if you download the pretrained posterior inferencers listed in the beginning of this document.
-
-```
-python scripts/data/process_data_for_posterior_inferencers.py --dataset_folder data/PubMed/
-```
-
-Next, we can train a posterior inferencer (starting from the root directory of huggingface's Transformers):
-
-```
-cd $HF_DIR
-cd examples/pytorch/text-classification
-```
-
-```
-python run_glue.py \
-    --model_name_or_path=bert-base-cased \
-    --do_train \
-    --do_eval \
-    --train_file=${WORKING_DIR}/data/PubMed/train.posterior_inferencer.json \
-    --validation_file=${WORKING_DIR}/data/PubMed/val.posterior_inferencer.json \
-    --max_seq_length=512 \
-    --per_gpu_train_batch_size=32 \
-    --learning_rate=2e-5 \
-    --num_train_epochs=3.0 \
-    --output_dir=${WORKING_DIR}/posterior_inferencer_checkpoints/PubMed \
-    --save_total_limit=5 \
-    --overwrite_output_dir > ${WORKING_DIR}/log.pubmed.trainPosteriorInferencer 2>&1&
-```
-
-### Posterior Inference
-
-The goal of posterior inference is to infer the section titles z conditioned on section text x. We use a BERT-based classifier and use the MAP value of z instead of maintaining a full distribution over z:
 
 ```
 python scripts/posterior_inference/infer_section_titles.py \
