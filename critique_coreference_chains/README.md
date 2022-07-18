@@ -194,13 +194,6 @@ python scripts/criticize/fit_critic.py --train_coreference_chains data/Wiki/trai
 
 
 
-```
-python scripts/posterior_inference/infer_section_titles.py \
-       --posterior_inferencer_checkpoint posterior_inferencer_checkpoints/PubMed \
-       --input_file generation.pubmed.w_title.gpt2.json \
-       --output_file predicted_z.generation.pubmed.w_title.gpt2.json
-```
-
 ### Model Criticism in Latent Space
 
 Now we are ready to criticize in the latent space.
