@@ -203,11 +203,18 @@ Now we are ready to criticize in the latent space.
 ```
 python scripts/criticize/criticize.py \
        --critic critic_checkpoints/Wiki/critic.pkl \
-       --coreference_chains generation.wiki.w_title.gpt2.films.json 
+       --coreference_chains generation.wiki.w_title.gpt2.films.coref.json 
 ```
 
 The output will contain the latent PPL for the LM generations.
 
+```
+python scripts/criticize/criticize.py \
+       --critic critic_checkpoints/Wiki/critic.pkl \
+       --coreference_chains data/Wiki/test.films.coref.json 
+```
+
+The output will contain the latent PPL for real data.
 
 ## Acknowledgements
 

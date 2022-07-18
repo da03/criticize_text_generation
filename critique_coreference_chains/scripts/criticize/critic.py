@@ -1,6 +1,7 @@
 import collections
 import json
 import pickle
+import math
 
 def get_N_grams(words, ngram, bos='<bos>', eos='<eos>'):
     words = [bos] * (ngram-1) + words + [eos]
