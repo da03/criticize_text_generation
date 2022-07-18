@@ -21,6 +21,8 @@ def main(args):
     samples_films = []
     for article in tqdm.tqdm(samples):
         sections = article['sections']
+        if len(sections) == 0:
+            continue
         first_section = sections[0]
         doc = nlp(first_section)
         if len(list(doc.sents)) == 0:

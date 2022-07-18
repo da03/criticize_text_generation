@@ -161,6 +161,15 @@ python scripts/data/extract_films.py --input_filename generation.wiki.w_title.gp
 python scripts/data/extract_films.py --input_filename generation.wiki.w_title.gptneo.json --output_filename generation.wiki.w_title.gptneo.films.json
 python scripts/data/extract_films.py --input_filename generation.wiki.wo_title.gpt2.json --output_filename generation.wiki.wo_title.gptneo.films.json
 python scripts/data/extract_films.py --input_filename generation.wiki.wo_title.gptneo.json --output_filename generation.wiki.wo_title.gptneo.films.json
+python scripts/data/extract_films.py --input_filename generation.wiki.wo_title.gptneo.json --output_filename generation.wiki.wo_title.gptneo.films.json
+```
+
+### Extract Coreference Chains
+
+Next, we use huggingface's package `neuralcoref` to perform coreference resolution and extract coreference chains.
+
+```
+python scripts/posterior_inference/infer_coreference_chains.py --input_filename generation.wiki.w_title.gpt2.films.json --output_filename generation.wiki.w_title.gpt2.films.coref.json
 ```
 
 ### Fit Critic Generative Processes (Optional)
