@@ -17,17 +17,12 @@ parser.add_argument('--N', type=int, default=5,
 args = parser.parse_args()
 
 
-def generate_N_grams(words, ngram, bos='<bos>', eos='<eos>'):
-    words = [bos] * (ngram-1) + words + [eos]
-    ngrams = list(zip(*[words[i:] for i in range(ngram)]))
-    return ngrams
-
 
 def main(args):
     critic = NGramCritic(N=args.N)
     critic.fit(args.train_coreference_chains)
     critic.save(args.output_critic_filename)
-    val_ppl, val_ppls = model.read_val(val_file)
+    #val_ppl, val_ppls = model.read_val(val_file)
 
 if __name__ == '__main__':
     main(args)

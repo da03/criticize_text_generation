@@ -1,4 +1,11 @@
 import collections
+import json
+import pickle
+
+def get_N_grams(words, ngram, bos='<bos>', eos='<eos>'):
+    words = [bos] * (ngram-1) + words + [eos]
+    ngrams = list(zip(*[words[i:] for i in range(ngram)]))
+    return ngrams
 
 def relabel_ngram(ngram):
     """Relabel entity ids in the ngram to avoid data sparsity issues. For example,
@@ -51,7 +58,7 @@ class NGramCritic():
     def get_prob_kenlm(self, line):
         #self.vocab_size = len(self.vocab) * self.ngram
         items = line.strip().split()
-        ngrams = generate_N_grams(items, self.ngram_max)
+        ngrams = get_N_grams(items, self.ngram_max)
         total_log_prob = 0
         total = 0
         log_probs = []
@@ -141,7 +148,7 @@ class NGramCritic():
 
             for sample in samples:
                 coreference_chain = sample['coreference_chain']
-                ngrams = generate_N_grams(coreference_chain, N)
+                ngrams = get_N_grams(coreference_chain, N)
                 for ngram in ngrams:
                     ngram_relabeled = relabel_ngram(ngram)
                     ngram_relabeled = ngram_relabeled[(N-n):] # for low-order n we need to truncate
@@ -154,3 +161,6 @@ class NGramCritic():
                     self.N1s[n] += 1
                 if ngram_prefix_and_suffix_count[ngram] == 2:
                     self.N2s[n] += 1
+
+    def save(self, output_critic_filename):
+        pickle.dump(self, open(output_critic_filename, 'wb'))

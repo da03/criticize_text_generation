@@ -42,6 +42,7 @@ For this section we only use the Wikipedia dataset, since it contains richer cor
 * [data](https://drive.google.com/file/d/1stCsnajY-DB9U2-LS32tmdmsZJHtAxte/view?usp=sharing) [GPT-2 LM](https://drive.google.com/file/d/1u4-ezV74UIec6uTkMxciX8oNkHGCtq1y/view?usp=sharing) [GPT-Neo LM](https://drive.google.com/file/d/1V6S05FxaKXGff5khe87uJbsdsCVTCkGl/view?usp=sharing)
 * Processed data: included in this repo in files `data/Wiki/train.films.json`, `data/Wiki/val.films.json`, and `data/Wiki/test.films.json`.
 * LM generations: included in this repo in files `generation.wiki.w_title.gpt2.films.json`, `generation.wiki.w_title.gptneo.films.json`, `generation.wiki.wo_title.gpt2.films.json`, and `generation.wiki.wo_title.gptneo.films.json`.
+* 5-gram Critic: included in file `data/Wiki/train.films.coref.critic.pkl`.
 
 
 ### Data Format
@@ -185,10 +186,10 @@ python scripts/posterior_inference/infer_coreference_chains.py --input_filename 
 
 ### Fit Critic Generative Processes (Optional)
 
-We need to fit the critic distribution $P_c(z)$ (this step is optional if you use the pretrained critic model):
+We need to fit the critic distribution $P_c(z)$ (this step is optional if you use the pretrained critic):
 
 ```
-python scripts/criticize/fit_critic.py --train_coreference_chains data/Wiki/train.films.coref.json --output_critic_filename data/Wiki/train.films.coref.critic.pt
+python scripts/criticize/fit_critic.py --train_coreference_chains data/Wiki/train.films.coref.json --output_critic_filename data/Wiki/train.films.coref.critic.pkl
 ```
 
 
