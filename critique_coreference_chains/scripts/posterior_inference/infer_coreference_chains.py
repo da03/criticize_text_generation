@@ -86,7 +86,7 @@ class Entity:
 
 
 def is_root_mention(token):
-    entity_id = None
+    entity_ids = []
     flag = False
     if token._.in_coref:
         clusters = token._.coref_clusters
@@ -97,7 +97,8 @@ def is_root_mention(token):
                 if token.i == root.i:
                     entity_id = cluster.i
                     flag = True
-    return (flag, entity_id)
+                    entity_ids.append(entity_id)
+    return (flag, entity_ids)
 
 
 def main(args):
@@ -121,16 +122,17 @@ def main(args):
                 coreference_chain_tmp.append(start_of_sentence)
 
             # First, extract person entity mentions
-            flag_root_mention, entity_id = is_root_mention(token)
+            flag_root_mention, entity_ids = is_root_mention(token)
 
             # Next, add mention to entity (to determine entity type for non-pronouns)
             if flag_root_mention:
-                assert entity_id is not None
-                if entity_id not in entity_dict:
-                    entity_dict[entity_id] = Entity(entity_id)
-                entity_dict[entity_id].add_mention(token)
+                assert len(entity_ids) > 0
+                for entity_id in entity_ids:
+                    if entity_id not in entity_dict:
+                        entity_dict[entity_id] = Entity(entity_id)
+                    entity_dict[entity_id].add_mention(token)
 
-                coreference_chain_tmp.append((token, entity_id))
+                coreference_chain_tmp.append((token, entity_ids[-1])) # break tie for multiple entities with same root
 
         # Next, remove non-person entities
         coreference_chain_tmp = [item for item in coreference_chain_tmp \

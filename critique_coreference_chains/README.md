@@ -163,10 +163,6 @@ As mentioned in the paper, we only consider generations about films only. To do 
 ```
 # Process LM generations
 python scripts/data/extract_films.py --input_filename generation.wiki.w_title.gpt2.json --output_filename generation.wiki.w_title.gpt2.films.json
-python scripts/data/extract_films.py --input_filename generation.wiki.w_title.gptneo.json --output_filename generation.wiki.w_title.gptneo.films.json
-python scripts/data/extract_films.py --input_filename generation.wiki.wo_title.gpt2.json --output_filename generation.wiki.wo_title.gptneo.films.json
-python scripts/data/extract_films.py --input_filename generation.wiki.wo_title.gptneo.json --output_filename generation.wiki.wo_title.gptneo.films.json
-python scripts/data/extract_films.py --input_filename generation.wiki.wo_title.gptneo.json --output_filename generation.wiki.wo_title.gptneo.films.json
 # Process data
 python scripts/data/extract_films.py --input_filename data/Wiki/train.json --output_filename data/Wiki/train.films.json
 python scripts/data/extract_films.py --input_filename data/Wiki/val.json   --output_filename data/Wiki/val.films.json
