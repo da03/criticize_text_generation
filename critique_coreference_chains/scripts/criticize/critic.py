@@ -3,10 +3,12 @@ import json
 import pickle
 import math
 
-def get_N_grams(words, ngram, bos='<bos>', eos='<eos>'):
-    words = [bos] * (ngram-1) + words + [eos]
+
+def get_N_grams(words, ngram, bos='<bos>'):
+    words = [bos] * (ngram-1) + words
     ngrams = list(zip(*[words[i:] for i in range(ngram)]))
     return ngrams
+
 
 def relabel_ngram(ngram):
     """Relabel entity ids in the ngram to avoid data sparsity issues. For example,

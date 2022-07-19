@@ -163,19 +163,25 @@ As mentioned in the paper, we only consider generations about films only. To do 
 ```
 # Process LM generations
 python scripts/data/extract_films.py --input_filename generation.wiki.w_title.gpt2.json --output_filename generation.wiki.w_title.gpt2.films.json
+python scripts/data/extract_films.py --input_filename generation.wiki.w_title.gptneo.json --output_filename generation.wiki.w_title.gptneo.films.json
+python scripts/data/extract_films.py --input_filename generation.wiki.wo_title.gpt2.json --output_filename generation.wiki.wo_title.gpt2.films.json
+python scripts/data/extract_films.py --input_filename generation.wiki.wo_title.gptneo.json --output_filename generation.wiki.wo_title.gptneo.films.json
 # Process data
 python scripts/data/extract_films.py --input_filename data/Wiki/train.json --output_filename data/Wiki/train.films.json
 python scripts/data/extract_films.py --input_filename data/Wiki/val.json   --output_filename data/Wiki/val.films.json
 python scripts/data/extract_films.py --input_filename data/Wiki/test.json  --output_filename data/Wiki/test.films.json
 ```
 
-### Posterior Inference - Extract Coreference Chains
+### Posterior Inference - Extract Coreference Chains (Optional)
 
-The goal of posterior inference is to infer the coreference chains z conditioned on text x. We use huggingface's off-the-shell tool `neuralcoref` to perform coreference resolution and extract coreference chains.
+The goal of posterior inference is to infer the coreference chains z conditioned on text x. We use huggingface's off-the-shell tool `neuralcoref` to perform coreference resolution and extract coreference chains. Again, this step is optional since we have included all the resulting files as part of this repo.
 
 ```
 # Process LM generations
 python scripts/posterior_inference/infer_coreference_chains.py --input_filename generation.wiki.w_title.gpt2.films.json --output_filename generation.wiki.w_title.gpt2.films.coref.json
+python scripts/posterior_inference/infer_coreference_chains.py --input_filename generation.wiki.w_title.gptneo.films.json --output_filename generation.wiki.w_title.gptneo.films.coref.json
+python scripts/posterior_inference/infer_coreference_chains.py --input_filename generation.wiki.wo_title.gpt2.films.json --output_filename generation.wiki.wo_title.gpt2.films.coref.json
+python scripts/posterior_inference/infer_coreference_chains.py --input_filename generation.wiki.wo_title.gptneo.films.json --output_filename generation.wiki.wo_title.gptneo.films.coref.json
 # Process data
 python scripts/posterior_inference/infer_coreference_chains.py --input_filename data/Wiki/train.films.json --output_filename data/Wiki/train.films.coref.json
 python scripts/posterior_inference/infer_coreference_chains.py --input_filename data/Wiki/val.films.json --output_filename data/Wiki/val.films.coref.json
@@ -202,7 +208,7 @@ python scripts/criticize/criticize.py \
        --coreference_chains generation.wiki.w_title.gpt2.films.coref.json 
 ```
 
-The output will contain the latent PPL for the LM generations.
+The output will contain the latent PPL for the LM generations (for the GPT-2 W/ Title setting. For other settings simply change `--coreference_chains`.).
 
 ```
 python scripts/criticize/criticize.py \

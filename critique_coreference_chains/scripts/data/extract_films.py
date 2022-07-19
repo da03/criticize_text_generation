@@ -32,7 +32,7 @@ def main(args):
     
         if 'film' in words and ('born' not in words):
             text = f'{first_sentence}'
-            m = re.match(r'.*is a.*film.*', text)
+            m = re.match(r'.*is a.*film.*', text, re.DOTALL)
             if m:
                 samples_films.append(article)
     json.dump(samples_films, open(output_filename, 'w'))

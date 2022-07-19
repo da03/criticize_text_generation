@@ -16,7 +16,6 @@ parser.add_argument('--N', type=int, default=5,
 args = parser.parse_args()
 
 
-
 def main(args):
     critic = NGramCritic(N=args.N)
     critic.fit(args.coreference_chains_train)
