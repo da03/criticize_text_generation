@@ -1,4 +1,4 @@
-# Model Criticism for Text Generation
+# Model Criticism for Long-Form Text Generation
 
 Here we provide code to reproduce our results for "Critiquing Topic Correlations". We provide all training data and training scripts, as well as all pretrained models used in our paper. Our code is built on top of [Huggingface Transformers](https://github.com/huggingface/transformers/tree/de635af3f1ef740aa32f53a91473269c6435e19e), David Blei and John Lafferty's [CTM](http://www.cs.columbia.edu/~blei/ctm-c/).
 
