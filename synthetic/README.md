@@ -1,4 +1,4 @@
-# Model Criticism for Text Generation
+# Model Criticism for Long-Form Text Generation
 
 Here we provide code to reproduce our results for "A Surprising Text Generation Failure". We provide all training data and training scripts, as well as all pretrained models used in our paper. Our code is built on top of [fairseq](https://github.com/pytorch/fairseq) and [pytorch-struct](https://github.com/harvardnlp/pytorch-struct/tree/e51fecc1473925e4c44de135c4a3240fcb20fa40).
 
