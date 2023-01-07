@@ -204,3 +204,18 @@ The output will contain the latent PPL for the LM generations.
 ## Acknowledgements
 
 The datasets PubMed and ArXiv are adapted from [Cohan et. al. 2018](https://aclanthology.org/N18-2097/). Wiki is processed based on the English Wikipedia [dumped on Dec 1, 2021](https://dumps.wikimedia.org/enwiki/20211201/).
+
+## Citation
+
+```
+@misc{https://doi.org/10.48550/arxiv.2210.08444,
+  doi = {10.48550/ARXIV.2210.08444},
+  url = {https://arxiv.org/abs/2210.08444},
+  author = {Deng, Yuntian and Kuleshov, Volodymyr and Rush, Alexander M.},
+  keywords = {Computation and Language (cs.CL), Machine Learning (cs.LG), Machine Learning (stat.ML), FOS: Computer and information sciences, FOS: Computer and information sciences},
+  title = {Model Criticism for Long-Form Text Generation},
+  publisher = {arXiv},
+  year = {2022},
+  copyright = {arXiv.org perpetual, non-exclusive license}
+}
+```
