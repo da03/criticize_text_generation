@@ -10,7 +10,7 @@ Instructions for "A Surprising Text Generation Failure" can be found at [../synt
 
 The code has been tested on Python 3.8. In addition, we need
 
-* [spacy 2.3.7](https://spacy.io/): `pip install spacy=2.3.7`. Note that we need to use spacy 2.x to be compatible with `neuralcoref`.
+* [spacy 2.3.7](https://spacy.io/): `pip install spacy==2.3.7`. Note that we need to use spacy 2.x to be compatible with `neuralcoref`.
 * [neuralcoref](https://github.com/huggingface/neuralcoref): `pip install neuralcoref`
 
 We will use a spacy model `en_core_web_lg` in our code, so we also need to download it:
