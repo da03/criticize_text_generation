@@ -208,14 +208,18 @@ The datasets PubMed and ArXiv are adapted from [Cohan et. al. 2018](https://acla
 ## Citation
 
 ```
-@misc{https://doi.org/10.48550/arxiv.2210.08444,
-  doi = {10.48550/ARXIV.2210.08444},
-  url = {https://arxiv.org/abs/2210.08444},
-  author = {Deng, Yuntian and Kuleshov, Volodymyr and Rush, Alexander M.},
-  keywords = {Computation and Language (cs.CL), Machine Learning (cs.LG), Machine Learning (stat.ML), FOS: Computer and information sciences, FOS: Computer and information sciences},
-  title = {Model Criticism for Long-Form Text Generation},
-  publisher = {arXiv},
-  year = {2022},
-  copyright = {arXiv.org perpetual, non-exclusive license}
+@inproceedings{deng-etal-2022-model,
+    title = "Model Criticism for Long-Form Text Generation",
+    author = "Deng, Yuntian  and
+      Kuleshov, Volodymyr  and
+      Rush, Alexander",
+    booktitle = "Proceedings of the 2022 Conference on Empirical Methods in Natural Language Processing",
+    month = dec,
+    year = "2022",
+    address = "Abu Dhabi, United Arab Emirates",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2022.emnlp-main.815",
+    pages = "11887--11912",
+    abstract = "Language models have demonstrated the ability to generate highly fluent text; however, it remains unclear whether their output retains coherent high-level structure (e.g., story progression). Here, we propose to apply a statistical tool, model criticism in latent space, to evaluate the high-level structure of the generated text. Model criticism compares the distributions between real and generated data in a latent space obtained according to an assumptive generative process. Different generative processes identify specific failure modes of the underlying model. We perform experiments on three representative aspects of high-level discourse{---}coherence, coreference, and topicality{---}and find that transformer-based language models are able to capture topical structures but have a harder time maintaining structural coherence or modeling coreference.",
 }
 ```
